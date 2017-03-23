@@ -1,0 +1,7 @@
+bison -d -v -g parser.y
+	
+flex scanner.l
+	
+gcc -c lex.yy.c
+	
+g++ -o exe lex.yy.o parser.tab.c -ly -lfl 
