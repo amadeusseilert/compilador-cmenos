@@ -1,3 +1,241 @@
+/****************************************************/
+/* File: tiny.y                                     */
+/* The TINY Yacc/Bison specification file           */
+/* Compiler Construction: Principles and Practice   */
+/* Kenneth C. Louden                                */
+/****************************************************/
+%{
+#define YYPARSER /* distinguishes Yacc output from other code files */
+
+#include "globals.h"
+#include "util.h"
+
+#define YYSTYPE TreeNode *
+static char * savedName; /* for use in assignments */
+static int savedLineNo;  /* ditto */
+static TreeNode * savedTree; /* stores syntax tree for later return */
+
+%}
+
+%token IF ELSE WHILE RETURN INT VOID
+%token ID NUM
+%token ASSIGN EQ LT GT LTE GTE DIF PLUS MINUS TIMES OVER
+%token LPAREN RPAREN SEMI LBRCKT RBRCKT LBRACE RBRACE
+%token ERROR
+%token OC CC
+
+%%
+
+program : 			declaration_list
+					;
+
+declaration_list : 	declaration_list declaration
+                 	| declaration
+					| ERROR
+                 	;
+
+declaration :		var_declaration
+	           		| fun_declaration
+             		;
+
+var_declaration :	type_specifier ID SEMI
+                	| type_specifier ID LBRCKT NUM RBRCKT SEMI
+					;
+
+type_specifier :	INT
+               		| VOID
+	             	;
+
+fun_declaration : 	type_specifier ID LPAREN params RPAREN compound_stmt
+					;
+
+params : 			param_list
+					| VOID
+					;
+
+param_list : 		param_list COMA param
+					| param 
+					;
+
+param : 			type_specifier ID
+					| type_specifier ID '[' ']'   {parsedSymbolAttributes.parameters = NumOfParams + 1;
+                                     parsedSymbolAttributes.array = 1;
+                                     parsedSymbolAttributes.initialized = 1;
+                                     insertSym($2, parsedSymbolAttributes, VAR);
+                                     resetparsedSymbolAttributes();
+                                    }
+      ;
+
+                    /* A function's scope is initilized before its parameters are
+                     * read. Here we check to see if the compound_stmt is the
+                     * function's body or a nested scope, since we already initalized
+                     * function body scope.
+                     */
+
+compound_stmt : '{'                                     {if(!inFunctionBody())
+                                                            initializeScope();
+                                                        }
+                 local_declarations statement_list '}'  {if(!inFunctionBody())
+                                                            finalizeScope();}
+              ;
+
+local_declarations : local_declarations var_declaration {emitDeclaration(VAR, $2);}
+                   | /* empty */ ;
+
+statement_list : statement_list statement
+               | /* empty */ ;
+
+statement : expression_stmt
+          | compound_stmt
+          | selection_stmt
+          | iteration_stmt
+          | return_stmt ;
+
+expression_stmt : expression ';'
+                | ';'
+				;
+
+selection_stmt : ifsubroutine  statement        {fprintf(fp, "EndIf%i:\n", $1);}
+               | ifsubroutine  statement ELSE	  {fprintf(fp, "jmp EndIfElse%i\n", $1);
+                              					         fprintf(fp, "EndIf%i:\n", $1);
+                      							            }
+				         statement					 	          {fprintf(fp, "EndIfElse%i:\n", $1);}
+               ;
+
+ifsubroutine : IF  '(' expression ')'  {$$ = LabelSeed; LabelSeed++;
+                     					          fprintf(fp, "cmp %s, 1\n", regToString($3));
+                                        fprintf(fp, "jne EndIf%i\n", $$);
+                                        releaseOneRegister();
+                                       }
+		   ;
+
+iteration_stmt : whilesubroutine
+
+                '(' expression ')' {fprintf(fp, "cmp %s, 1\n", regToString($<n>3));
+                                     fprintf(fp, "jne EndWhile%i\n", $1);
+                                     releaseOneRegister();
+                                    }
+                 statement          {fprintf(fp, "jmp While%i\n", $1);
+                                     fprintf(fp, "EndWhile%i:\n", $1);
+                                    }
+                ;
+whilesubroutine : WHILE    {$$ = LabelSeed; LabelSeed++;
+                            fprintf(fp, "While%i:\n", $$);
+                           }
+
+return_stmt : RETURN ';'              {emitEpilogue();}
+
+            | RETURN expression ';'   {if($2 == EAX){
+										                    emitPrintReturn();
+                                        emitEpilogue();
+									                     }
+                                       else{
+                                        fprintf(fp, "mov eax, %s\n", regToString($2));
+										                    emitPrintReturn();
+                                        emitEpilogue();
+                                       }
+                                       releaseOneRegister();
+                                      }
+
+            ;
+
+expression : var '=' expression     {$$=9;
+                                     emitMemOp(STORE,$1,$3);
+                                     releaseOneRegister();
+                                    }
+           | simple_expression      {$$ = $1;}
+           ;
+
+var : ID                    {lookUpSym($1)->attr.references++; strcpy($$, $1);}
+
+    | ID '[' expression ']' {struct symbolEntry *tmp = lookUpSym($1);
+                             if(!tmp->attr.array)
+                             printf("error - %s is not an array", tmp->id);
+                             tmp->attr.references++;
+                             tmp->attr.regContainingArrIndex = $3;
+                             strcpy($$, $1);
+                            }
+    ;
+
+simple_expression : additive_expression relop additive_expression  {$$=$1;
+                                                                    emitRelOp($2,$1,$3);
+                                                                    releaseOneRegister();
+                                                                   }
+                  | additive_expression                            {$$ = $1;
+                                                                   }
+                  ;
+
+relop : LTE {$$=LTEQU;}| '<'{$$=LESS;} | '>' {$$=GTR;}| GTE{$$=GTEQU;} | EQUAL{$$=EQU;} | NOTEQUAL {$$=NEQU;};
+
+additive_expression : additive_expression addop term    {$$ = $1;
+                                                         emitAluOp($2,$1,$3);
+                                                         releaseOneRegister();
+                                                        }
+                    | term                              {$$ = $1;}
+                    ;
+
+addop : '+' {$$ = ADD;}
+      | '-' {$$ = SUB;}
+      ;
+
+term : term mulop factor    {$$ = $1;
+                             emitAluOp($2,$1,$3);
+                             releaseOneRegister();
+                            }
+     | factor               {$$ = $1;}
+     ;
+
+mulop : '*' {$$ = MULT;}
+      | '/' {$$ = DIV;}
+      ;
+
+factor : '(' expression ')' {$$ = $2;}
+       | var                {
+                             $$ = nextFreeRegister();
+                             emitMemOp(LOAD,$1,$$);
+                            }
+
+       | call               {$$ = $1;}
+       | NUM                {$$=nextFreeRegister();
+                             emitLoadConst($$, $1);
+                            }
+       ;
+
+call : ID '(' args ')'  {
+                         emitCall($1, ArgList);
+                         $$=nextFreeRegister();
+                         NumOfParams=0;
+                        }
+     ;
+
+args : arg_list | /* empty */ ;
+
+arg_list : arg_list ',' expression {ArgList[NumOfParams++] = $3;}
+         | expression              {ArgList[NumOfParams++] = $1;}
+         ;
+%%
+
+int yyerror(char * message)
+{ fprintf(listing,"Syntax error at line %d: %s\n",lineno,message);
+  fprintf(listing,"Current token: ");
+  printToken(yychar,tokenString);
+  Error = TRUE;
+  return 0;
+}
+
+/* yylex calls getToken to make Yacc/Bison output
+ * compatible with ealier versions of the TINY scanner
+ */
+static int yylex(void)
+{ return getToken(); }
+
+TreeNode * parse(void)
+{ yyparse();
+  return savedTree;
+}
+
+
+/*
 
 %{
 
@@ -646,4 +884,4 @@ int main(){
 	printf("Tree:\n");
 	printTree(tree);
 	printf("\n");
-}
+}*/
