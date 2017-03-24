@@ -8,6 +8,7 @@
 %{
 #include "globals.h"
 #include "util.h"
+#include "scanner.h"
 /* lexeme of identifier or reserved word */
 char tokenString[MAXTOKENLEN+1];
 %}
@@ -55,7 +56,7 @@ whitespace  [ \t]+
 
 "/*"             			{ignore(OC);}
 "*/"             			{return CC;}
-.               			{lexicalError(ERROR);}
+.               			{printLexicalError(ERROR);}
 
 %%
 
@@ -66,7 +67,7 @@ void ignore (TokenType currentToken) {
 	}
 }
 
-void lexicalError (TokenType currentToken) {
+void printLexicalError (TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
 	fprintf(listing, "Syntax error at line %d\n",lineno);
 	fprintf(listing, "Token: ");

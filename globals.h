@@ -27,7 +27,7 @@
 #ifndef YYPARSER
 
 /* the name of the following file may change */
-#include "y.tab.h"
+#include "parser.tab.h"
 
 /* ENDFILE is implicitly defined by Yacc/Bison,
  * and not included in the tab.h file
@@ -46,8 +46,6 @@
 
 /* MAXRESERVED = the number of reserved words */
 #define MAXRESERVED 6
-/* MAXTOKENLEN is the maximum size of a token */
-#define MAXTOKENLEN 40
 
 #define MAXCHILDREN 3
 
