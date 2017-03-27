@@ -1,10 +1,9 @@
 /****************************************************/
-/* File: globals.h                                  */
-/* Yacc/Bison Version                               */
-/* Global types and vars for TINY compiler          */
-/* must come before other include files             */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: globals.h                               */
+/* Interface global para o compilador. Aqui são		*/
+/* incluídos as bibliotecas padrões e as definições	*/
+/* gerais do compilador.				       		*/
 /****************************************************/
 
 #ifndef _GLOBALS_H_
@@ -15,27 +14,23 @@
 #include <ctype.h>
 #include <string.h>
 
-/* Yacc/Bison generates internally its own values
- * for the tokens. Other files can access these values
- * by including the tab.h file generated using the
- * Yacc/Bison option -d ("generate header")
- *
- * The YYPARSER flag prevents inclusion of the tab.h
- * into the Yacc/Bison output itself
- */
+/*
+Yacc/Bison gera internamente seus próprios valores para os tokens (usualmete
+valores inteiros);. Outros arquivos podem acessar estes valores pela inclusão
+do cabeçalho 'tab.h' gerado pela opção '-d' ("gerar cabeçalho") no ato de
+invocação do Yacc/Bison.
 
+Definir a flag YYPARSER previne a inclusão do 'tab.h' dentro dos próprios
+arquivos output do Yacc/Bison.
+*/
 #ifndef YYPARSER
 
-/* the name of the following file may change */
+/* Cabeçalho gerado a partir do 'parser.y'*/
 #include "parser.tab.h"
-
-/* ENDFILE is implicitly defined by Yacc/Bison,
- * and not included in the tab.h file
- */
-#define ENDFILE 0
 
 #endif
 
+/* Definições auxiliares*/
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -44,35 +39,33 @@
 #define TRUE 1
 #endif
 
-/* MAXRESERVED = the number of reserved words */
+/* Número máximo de palavras reservadas na gramática*/
 #define MAXRESERVED 6
-
+/* Número máximo de filhos que um nó da árvore de sintaxe pode ter*/
 #define MAXCHILDREN 3
 
-
-/* Yacc/Bison generates its own integer values
- * for tokens
- */
+/* Definir um nome para os valores inteiros que o Yacc/Bison atribuir aos
+tokens*/
 typedef int TokenType;
 
-extern FILE* source; /* source code text file */
-extern FILE* listing; /* listing output text file */
-extern FILE* code; /* code text file for TM simulator */
+extern FILE* source; /* Código fonte, arquivo de entrada */
+extern FILE* listing; /* Arquivo para listagem e debug */
+extern FILE* code; /* Arquivo output para a C-Machine */
 
-extern int lineno; /* source line number for listing */
+extern int lineno; /* Contador de linhas para listagem */
 
 /**************************************************/
-/***********   Syntax tree for parsing ************/
+/***********   Árvore de Sintaxe 	   ************/
 /**************************************************/
 
 typedef enum {StmtK,ExpK} NodeKind;
 typedef enum {IfK, WhileK, AssignK, ReturnK} StmtKind;
 typedef enum {OpK,ConstK,IdK} ExpKind;
 
-/* ExpType is used for type checking */
+/* ExpType será usado para análise semântica. Verificação de tipo. */
 typedef enum {Void,Integer,Boolean} ExpType;
 
-
+/* Estrutura de um nó da árvore */
 typedef struct treeNode {
 	struct treeNode * child[MAXCHILDREN];
     struct treeNode * sibling;
@@ -90,41 +83,45 @@ typedef struct treeNode {
         char * name;
 	} attr;
 
-    ExpType type; /* for type checking of exps */
+    ExpType type;
    } TreeNode;
 
 /**************************************************/
-/***********   Flags for tracing       ************/
+/***********   Flags para debug       ************/
 /**************************************************/
 
-/* EchoSource = TRUE causes the source program to
- * be echoed to the listing file with line numbers
- * during parsing
- */
+/*
+EchoSource = TRUE faz com que o arquivo de entrada seja impresso no arquivo
+listing com a numeração de linhas durante a análise sintática.
+*/
 extern int EchoSource;
 
-/* TraceScan = TRUE causes token information to be
- * printed to the listing file as each token is
- * recognized by the scanner
- */
+/*
+TraceScan = TRUE faz com que os tokens identidicados durante o scan sejam
+impressos no arquivo listing.
+*/
 extern int TraceScan;
 
-/* TraceParse = TRUE causes the syntax tree to be
- * printed to the listing file in linearized form
- * (using indents for children)
- */
+/*
+TraceParse = TRUE faz com que a árvore de sintaxe seja impressa no arquivo
+listing na forma linear (utilizando identação para os filhos)
+*/
 extern int TraceParse;
 
-/* TraceAnalyze = TRUE causes symbol table inserts
- * and lookups to be reported to the listing file
- */
+/*
+TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo
+listing
+*/
 extern int TraceAnalyze;
 
-/* TraceCode = TRUE causes comments to be written
- * to the TM code file as code is generated
- */
+/*
+TraceCode = TRUE faz com que comentários sejam gerados no arquivo code conforme
+o código é gerado.
+*/
 extern int TraceCode;
 
-/* Error = TRUE prevents further passes if an error occurs */
+/*
+Error = TRUE todos os erros são reportados ná análise
+*/
 extern int Error;
 #endif

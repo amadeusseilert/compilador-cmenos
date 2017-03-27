@@ -1,16 +1,16 @@
 /****************************************************/
-/* File: tiny.l                                     */
-/* Lex specification for TINY                       */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: scanner.l                               */
+/* Arquivo de definições para o Flex, que produzirá	*/
+/* o scanner para o compilador		    			*/
 /****************************************************/
 
 %{
 #include "globals.h"
 #include "util.h"
 #include "scanner.h"
-/* lexeme of identifier or reserved word */
-char tokenString[MAXTOKENLEN+1];
+/* Lexema de um identificador ou palavra reservada */
+char tokenString[MAXTOKENLEN + 1];
 %}
 
 digit       [0-9]
@@ -52,7 +52,7 @@ whitespace  [ \t]+
 {number}        			{return NUM;}
 {word}({word}|{number})*    {return ID;}
 {newline}       			{lineno++;}
-{whitespace}    			{/* skip whitespace */}
+{whitespace}    			{/* não toma nenhuma ação */}
 
 "/*"             			{ignore(OC);}
 "*/"             			{return CC;}
@@ -60,6 +60,10 @@ whitespace  [ \t]+
 
 %%
 
+/*
+Procedimento responsável por ignorar a leitura de qualquer string que estiver
+entre os tokens OC ("Open Commentary") e CC ("Close Commentary").
+*/
 void ignore (TokenType currentToken) {
 
 	while (currentToken != CC){
@@ -67,6 +71,9 @@ void ignore (TokenType currentToken) {
 	}
 }
 
+/*
+Procedimento responsável em emitir as mensagens de erro léxico no listing.
+*/
 void printLexicalError (TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
 	fprintf(listing, "Syntax error at line %d\n",lineno);
@@ -74,6 +81,10 @@ void printLexicalError (TokenType currentToken) {
 	printToken(currentToken, tokenString);
 }
 
+/*
+Função responsável pela obtenção de um token do arquivo source, caso a flag
+TraceScan for TRUE, todo token identificado será impresso no listing.
+*/
 TokenType getToken (void) {
 	TokenType currentToken;
   	currentToken = yylex();

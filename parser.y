@@ -1,11 +1,12 @@
 /****************************************************/
-/* File: tiny.y                                     */
-/* The TINY Yacc/Bison specification file           */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: parser.y	                            */
+/* Arquivo de definições para o Bison, que			*/
+/* produzirá o parser do compilador					*/
 /****************************************************/
+
 %{
-#define YYPARSER /* distinguishes Yacc output from other code files */
+#define YYPARSER /* Distingui o output do Yacc dos outros arquivos de código */
 
 #include "globals.h"
 #include "util.h"
@@ -13,17 +14,21 @@
 #include "parser.h"
 
 #define YYSTYPE TreeNode *
-static char * savedName; /* for use in assignments */
-static int savedLineNo;  /* ditto */
-static TreeNode * savedTree; /* stores syntax tree for later return */
+static char * savedName; /* Usado em atribuições */
+static int savedLineNo;  /* Usado em atribuições */
 
-/* allocate global variables */
+/*
+Armazena a árvore de sintaxe para uso posterior.
+*/
+static TreeNode * savedTree;
+
+/* Aloca as variáveis globais definidas no cabeçalho 'globals.h' */
 int lineno = 0;
 FILE * source;
 FILE * listing;
 FILE * code;
 
-/* allocate and set tracing flags */
+/* Define as flags para o uso */
 int EchoSource = FALSE;
 int TraceScan = FALSE;
 int TraceParse = TRUE;
@@ -78,20 +83,14 @@ param : 				type_specifier ID
 						| type_specifier ID LBRCKT RBRCKT
       					;
 
-	                    /* A function's scope is initilized before its parameters are
-	                     * read. Here we check to see if the compound_stmt is the
-	                     * function's body or a nested scope, since we already initalized
-	                     * function body scope.
-	                     */
-
 compound_stmt : 		LBRACE local_declarations statement_list RBRACE
 						;
 
 local_declarations :	local_declarations var_declaration
-                   		| /* empty */ ;
+                   		| /* vazio */ ;
 
 statement_list : 		statement_list statement
-               			| /* empty */ ;
+               			| /* vazio */ ;
 
 statement : 			expression_stmt
           				| compound_stmt
@@ -166,14 +165,16 @@ call : 					ID LPAREN args RPAREN
      					;
 
 args : 					arg_list
-						| /* empty */
+						| /* vazio */
 						;
 
 arg_list : 				arg_list COMA expression
          				| expression
          				;
 %%
-
+/*
+Função responsável em emitir as mensagens de erro de sintaxe no listing.
+*/
 int yyerror (char * message) {
 	fprintf(listing,"Syntax error at line %d: %s\n", lineno, message);
 	fprintf(listing,"Current token: ");
@@ -182,13 +183,17 @@ int yyerror (char * message) {
 	return 0;
 }
 
-/* yylex calls getToken to make Yacc/Bison output
-* compatible with ealier versions of the TINY scanner
+/*
+Esta função invoca a função getToken para criar um output do Yacc/Bison
+compatível com versões mais antigas do Lex.
 */
 static int yylex (void) {
 	return getToken();
 }
 
+/*
+Esta função inicia a análise e constroi a árvore de sintaxe.
+ */
 TreeNode * parse (void) {
 	yyparse();
 	return savedTree;

@@ -1,17 +1,16 @@
 /****************************************************/
-/* File: util.c                                     */
-/* Utility function implementation                  */
-/* for the TINY compiler                            */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: util.c                                	*/
+/* Implementação das funççoes de utilidade do 		*/
+/* compilador       								*/
 /****************************************************/
 
 #include "globals.h"
 #include "util.h"
 
-/* Procedure printToken prints a token
- * and its lexeme to the listing file
- */
+/*
+Procedimento que imprime um token e seu lexema no arquivo listitng
+*/
 void printToken( TokenType token, const char* tokenString ) {
     switch (token){
         case IF:
@@ -50,14 +49,14 @@ void printToken( TokenType token, const char* tokenString ) {
         case ERROR:
             fprintf(listing, "ERROR: %s\n", tokenString);
             break;
-        default: /* should never happen */
+        default: /* Este caso nunca deve acontecer */
             fprintf(listing,"Unknown token: %d\n",token);
     }
 }
 
-/* Function newStmtNode creates a new statement
- * node for syntax tree construction
- */
+/*
+Esta função cria um nó do tipo statement para a construção da árvore de sintaxe.
+*/
 TreeNode * newStmtNode(StmtKind kind) {
     TreeNode * t = (TreeNode *) malloc(sizeof(TreeNode));
     int i;
@@ -73,9 +72,9 @@ TreeNode * newStmtNode(StmtKind kind) {
     return t;
 }
 
-/* Function newExpNode creates a new expression
- * node for syntax tree construction
- */
+/*
+Esta função cria um nó do tipo expressão para a construção da árvore de sintaxe.
+*/
 TreeNode * newExpNode(ExpKind kind) {
     TreeNode * t = (TreeNode *) malloc(sizeof(TreeNode));
     int i;
@@ -92,9 +91,9 @@ TreeNode * newExpNode(ExpKind kind) {
     return t;
 }
 
-/* Function copyString allocates and makes a new
- * copy of an existing string
- */
+/*
+Função que aloca e cria uma copia de uma string existente.
+*/
 char * copyString(char * s) {
     int n;
     char * t;
