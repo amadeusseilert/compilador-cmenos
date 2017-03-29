@@ -20,6 +20,8 @@ word  		{letter}+
 newline     \n
 whitespace  [ \t]+
 
+%option noyywrap
+
 %%
 
 "if"            			{return IF;}

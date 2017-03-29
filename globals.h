@@ -63,7 +63,7 @@ typedef enum {IfK, WhileK, AssignK, ReturnK} StmtKind;
 typedef enum {OpK,ConstK,IdK} ExpKind;
 
 /* ExpType será usado para análise semântica. Verificação de tipo. */
-typedef enum {Void,Integer,Boolean} ExpType;
+typedef enum {Void, Integer, Boolean} ExpType;
 
 /* Estrutura de um nó da árvore */
 typedef struct treeNode {

@@ -1,7 +1,7 @@
 /****************************************************/
 /* Autor: Amadeus T. Seilert						*/
 /* Arquivo: util.c                                	*/
-/* Implementação das funççoes de utilidade do 		*/
+/* Implementação das funções de utilidade do 		*/
 /* compilador       								*/
 /****************************************************/
 
@@ -107,16 +107,21 @@ char * copyString(char * s) {
     return t;
 }
 
-/* Variable indentno is used by printTree to
- * store current number of spaces to indent
- */
+/*
+Variável auxiliar que armazena o número de caráctere de espaço usada na
+identação
+*/
 static int indentno = 0;
 
-/* macros to increase/decrease indentation */
+/*
+macros para aumentar/diminuir a identação
+*/
 #define INDENT indentno+=2
 #define UNINDENT indentno-=2
 
-/* printSpaces indents by printing spaces */
+/*
+Imprime espaços no listing conforme a quantidade armazena em indentno
+*/
 static void printSpaces(void) {
     int i;
     for (i = 0; i < indentno; i++)

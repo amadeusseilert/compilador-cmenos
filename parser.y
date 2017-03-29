@@ -22,21 +22,6 @@ Armazena a árvore de sintaxe para uso posterior.
 */
 static TreeNode * savedTree;
 
-/* Aloca as variáveis globais definidas no cabeçalho 'globals.h' */
-int lineno = 0;
-FILE * source;
-FILE * listing;
-FILE * code;
-
-/* Define as flags para o uso */
-int EchoSource = FALSE;
-int TraceScan = FALSE;
-int TraceParse = TRUE;
-int TraceAnalyze = FALSE;
-int TraceCode = FALSE;
-
-int Error = FALSE;
-
 %}
 
 %token IF ELSE WHILE RETURN INT VOID
@@ -49,15 +34,55 @@ int Error = FALSE;
 %%
 
 program : 				declaration_list
+						{
+							/*
+							Atribui o valor semântico do programa como uma
+							lista de declarações no nó inicial da árvore
+							*/
+							savedTree = $1;
+						}
 						;
 
 declaration_list : 		declaration_list declaration
+						{
+							/*
+							Enquanto existem regras de declarações reconhecidas,
+							percorre os "irmãos" do nó corrente.
+							*/
+							YYSTYPE t = $1;
+							if (t != NULL) {
+								while (t->sibling != NULL)
+									t = t->sibling;
+
+								/*
+								Encontra o final da lista de declarações e
+								adiciona a mais nova declaração como irmão
+								do último elemento
+								*/
+								t->sibling = $2;
+								$$ = $1;
+							} else {
+								$$ = $2;
+							}
+						}
                  		| declaration
-						| ERROR
+						{
+							$$ = $1;
+						}
                  		;
 
 declaration :			var_declaration
+						{
+							$$ = $1;
+						}
 	           			| fun_declaration
+						{
+							$$ = $1;
+						}
+						| ERROR
+						{
+							$$ = NULL;
+						}
              			;
 
 var_declaration :		type_specifier ID SEMI
@@ -197,60 +222,4 @@ Esta função inicia a análise e constroi a árvore de sintaxe.
 TreeNode * parse (void) {
 	yyparse();
 	return savedTree;
-}
-
-int main( int argc, char * argv[] ) {
-	TreeNode * syntaxTree;
-
-	char pgm[120]; /* source code file name */
-	if (argc != 2){
-		fprintf(stderr,"usage: %s <filename>\n", argv[0]);
-		exit(1);
-	}
-
-	strcpy(pgm, argv[1]) ;
-	if (strchr (pgm, '.') == NULL)
-		strcat(pgm, ".cm");
-
-	source = fopen(pgm, "r");
-	if (source == NULL){
-		fprintf(stderr, "File %s not found\n", pgm);
-		exit(1);
-	}
-
-	listing = stdout; /* send listing to screen */
-	fprintf(listing,"\nC MINUS COMPILATION: %s\n",pgm);
-	/*#if NO_PARSE
-	while (getToken()!=ENDFILE);
-	#else*/
-	syntaxTree = parse();
-
-	/*if (TraceParse) {
-		fprintf(listing,"\nSyntax tree:\n");
-		printTree(syntaxTree);
-	}*/
-	/*#if !NO_ANALYZE
-	if (! Error)
-	{ if (TraceAnalyze) fprintf(listing,"\nBuilding Symbol Table...\n");
-	buildSymtab(syntaxTree);
-	if (TraceAnalyze) fprintf(listing,"\nChecking Types...\n");
-	typeCheck(syntaxTree);
-	if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
-	}
-	#if !NO_CODE
-	if (! Error)
-	{ char * codefile;
-		int fnlen = strcspn(pgm,".");
-		codefile = (char *) calloc(fnlen+4, sizeof(char));
-		strncpy(codefile,pgm,fnlen);
-		strcat(codefile,".tm");
-		code = fopen(codefile,"w");
-		if (code == NULL)
-		{ printf("Unable to open %s\n",codefile);
-		exit(1);
-	}
-	codeGen(syntaxTree,codefile);*/
-	fclose(source);
-
-	return 0;
 }

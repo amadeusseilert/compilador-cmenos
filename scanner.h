@@ -11,7 +11,7 @@
 #define MAXTOKENLEN 40
 
 /* Lexema de um identificador ou palavra reservada */
-extern char tokenString[MAXTOKENLEN+1];
+extern char tokenString[MAXTOKENLEN + 1];
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
 entre os tokens OC ("Open Commentary") e CC ("Close Commentary").
