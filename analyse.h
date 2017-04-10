@@ -1,8 +1,8 @@
 /****************************************************/
-/* File: analyze.h                                  */
-/* Semantic analyzer interface for TINY compiler    */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: analyse.h                               */
+/* Interface para os procedimentos que farão		*/
+/* análises de semântica sobre a árvore de sintaxe.	*/
 /****************************************************/
 
 #ifndef _ANALYZE_H_

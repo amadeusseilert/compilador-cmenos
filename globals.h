@@ -62,7 +62,7 @@ extern int lineno; /* Contador de linhas para listagem */
 /**************************************************/
 
 typedef enum {StmtK, ExpK, DeclK} NodeKind;
-typedef enum {IfK, WhileK, AssignK, ReturnK} StmtKind;
+typedef enum {CmpdK, IfK, WhileK, AssignK, CallK, ReturnK} StmtKind;
 typedef enum {OpK, ConstK, IdK} ExpKind;
 typedef enum {VarK, FunK, ParamK} DeclKind;
 
@@ -111,7 +111,7 @@ extern int TraceScan;
 TraceParse = TRUE faz com que a árvore de sintaxe seja impressa no arquivo
 listing na forma linear (utilizando identação para os filhos)
 */
-//extern int TraceParse;
+extern int TraceParse;
 
 /*
 TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo

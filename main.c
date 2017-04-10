@@ -1,45 +1,93 @@
+/****************************************************/
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: main.c                          	    */
+/* Arquivo com função main do compilador C-.		*/
+/****************************************************/
+
 #include "globals.h"
+
+/* set NO_PARSE to TRUE to get a scanner-only compiler */
+#define NO_PARSE FALSE
+/* set NO_ANALYZE to TRUE to get a parser-only compiler */
+//#define NO_ANALYZE FALSE
+
+/* set NO_CODE to TRUE to get a compiler that does not
+ * generate code
+ */
+//#define NO_CODE FALSE
+
 #include "util.h"
+#if NO_PARSE
 #include "scanner.h"
+#else
 #include "parser.h"
+// #if !NO_ANALYZE
+// #include "analyze.h"
+// #if !NO_CODE
+// #include "cgen.h"
+// #endif
+// #endif
+#endif
 
-//#define YYDEBUG 1
-
-/* Aloca as variáveis globais definidas no cabeçalho 'globals.h' */
+/****************************************************/
+/* ---------- Configurações de execução -----------	*/
+/* Aloca as variáveis globais definidas no 			*/
+/* cabeçalho 'globals.h'. OBS: leia 'globals.h' 	*/
+/****************************************************/
 int lineno = 0;
 FILE * source;
 FILE * listing;
-//FILE * code;
+FILE * code;
 
 int TraceScan = TRUE;
+int TraceParse = TRUE;
 
 int Error = FALSE;
 
+/*
+O executável deve ser chamado passando um argumento, que será o
+arquivo de entrada 'source'.
+*/
 int main( int argc, char * argv[] ) {
-	YYSTYPE syntaxTree;
-	char pgm[128]; /* source code file name */
-	//yydebug = 0;
-	if (argc != 2){
-		fprintf(stderr,"usage: %s <filename>\n", argv[0]);
+
+	YYSTYPE syntaxTree; /*árvore de sintaxe */
+
+	if (argc != 2){ /* Verifica se a quantidade de argumentos é válida */
+		fprintf(stderr,"usage: %s <input>\n", argv[0]);
         exit(1);
     }
 
-	strcpy(pgm, argv[1]) ;
-    if (strchr (pgm, '.') == NULL)
-       strcat(pgm,".cm");
-	   
-	source = fopen(pgm, "r");
+	strcpy(inputName, argv[1]);
+	source = fopen(inputName, "r"); /* Tenta abrir o arquivo de entrada */
 	if (source == NULL){
-		fprintf(stderr, "File %s not found\n", argv[1]);
+		fprintf(stderr, "Error at openning file %s\n", inputName);
 		exit(1);
 	}
 
-	listing = stdout;
+	listing = stdout; /* Envia o arquivo de depuração para o stdout */
 	fprintf(listing, "\nC MINUS COMPILATION\n");
-	syntaxTree = parse();
-	printTree(syntaxTree);
-	fclose(source);
-	free(syntaxTree);
 
+#if NO_PARSE
+	while (getToken() != EOF);
+#else
+	syntaxTree = parse();
+
+	if (TraceParse) {
+		/* Caso a flag de TraceScan for TRUE, a árvore de sintaxe é impressa no
+		listing */
+
+      	fprintf(listing, "\nSyntax tree:\n");
+      	printTree(syntaxTree);
+    }
+
+	// code = fopen("output.cmm", "w+"); /* Tenta abrir o arquivo de saída */
+	// if (code == NULL) {
+	// 	fprintf(stderr, "Error at openning file output.cmm\n");
+	// 	exit(1);
+	// }
+	// fclose(code);
+	free(syntaxTree);
+#endif
+	fclose(source);
 	return 0;
 }

@@ -1,58 +1,48 @@
 /****************************************************/
-/* File: symtab.h                                   */
-/* Symbol table interface for the TINY compiler     */
-/* (allows only one symbol table)                   */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: symtab.h                                */
+/* Interface da tabela de símbolos do 				*/
+/* compilador C-.									*/
 /****************************************************/
 
 #ifndef _SYMTAB_H_
 #define _SYMTAB_H_
 
-/* SIZE is the size of the hash table */
+/* Tamanho máximo de símbolos diferentes que a tabela poderá comportar */
 #define SIZE 211
 
-/* SHIFT is the power of two used as multiplier
-in hash function  */
+/* Potência de dois para o deslocamento como multiplicador na função de hash */
 #define SHIFT 4
 
-/* the list of line numbers of the source
-* code in which a variable is referenced
-*/
-typedef struct LineListRec
-{ int lineno;
+/* Cada símbolo único na tabela possui uma lista encadeada que indica as
+linhas as quais se encontram as ocorrências no arquivo de entrada 'source' */
+typedef struct LineListRec {
+	int lineno;
 	struct LineListRec * next;
 } * LineList;
 
-/* The record in the bucket lists for
-* each variable, including name,
-* assigned memory location, and
-* the list of line numbers in which
-* it appears in the source code
-*/
-typedef struct BucketListRec
-{ char * name;
+/* O registro na lista de buckets para cada variável, o qual mantém informações
+como o nome, as linhas e localização na memória. É importante notar que um
+bucket possui referência encadeada também, para tratar colisões na função
+hash */
+typedef struct BucketListRec {
+	char * name;
 	LineList lines;
 	int memloc ; /* memory location for variable */
 	struct BucketListRec * next;
 } * BucketList;
 
-/* Procedure st_insert inserts line numbers and
- * memory locations into the symbol table
- * loc = memory location is inserted only the
- * first time, otherwise ignored
- */
+ /* Procedimento de inserção um símbolo na tabela. Adiciona também a referência
+ do número da linha e na posição na memória. loc é ignorado após a primeira
+ inserção do mesmo símbolo */
 void st_insert( char * name, int lineno, int loc );
 
-/* Function st_lookup returns the memory
- * location of a variable or -1 if not found
- */
+ /* Função que retorna a posição na memória de uma variável. Retorna -1 se não
+ encontrada. */
 int st_lookup ( char * name );
 
-/* Procedure printSymTab prints a formatted
- * listing of the symbol table contents
- * to the listing file
- */
+/* Procedimento que imprime a tabela de símbolos no arquivo de depuração
+'listing' */
 void printSymTab(FILE * listing);
 
 #endif

@@ -11,6 +11,8 @@
 #include "scanner.h"
 /* Lexema de um identificador ou palavra reservada */
 char tokenString[MAXTOKENLEN + 1];
+/* Armazena a string do último token ID ou NUM reconhecido */
+char lastToken[MAXTOKENLEN + 1];
 %}
 
 digit       [0-9]
@@ -99,6 +101,9 @@ TokenType getToken(void) {
   	}
   	currentToken = yylex();
   	strncpy(tokenString, yytext, MAXTOKENLEN);
+	if (currentToken == ID || currentToken == NUM)
+		strncpy(lastToken, yytext, MAXTOKENLEN);
+
   	if (TraceScan) {
     	fprintf(listing, "\t%d: ", lineno);
     	printToken(currentToken, tokenString);

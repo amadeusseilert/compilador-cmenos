@@ -161,8 +161,11 @@ void printTree( TreeNode * tree ){
   	INDENT;
   	while (tree != NULL) {
     	printSpaces();
-    	if (tree->nodekind==StmtK){
+    	if (tree->nodekind == StmtK){
 			switch (tree->kind.stmt) {
+				case CmpdK:
+					fprintf(listing, "Compound Stmt\n");
+					break;
         		case IfK:
           			fprintf(listing, "If\n");
           			break;
@@ -172,6 +175,9 @@ void printTree( TreeNode * tree ){
         		case AssignK:
           			fprintf(listing, "Assign to: %s\n",tree->attr.name);
           			break;
+				case CallK:
+					fprintf(listing, "Call\n");
+					break;
         		case ReturnK:
           			fprintf(listing, "Return\n");
           			break;
@@ -179,23 +185,36 @@ void printTree( TreeNode * tree ){
           			fprintf(listing, "Unknown StmtNode kind\n");
           			break;
       		}
-    	} else if (tree->nodekind==ExpK) {
+    	} else if (tree->nodekind == ExpK) {
 			switch (tree->kind.exp) {
         		case OpK:
           			fprintf(listing, "Op: ");
-          			printToken(tree->attr.op,"\0");
+          			printToken(tree->op, "\0");
           			break;
 	        	case ConstK:
-	          		fprintf(listing, "Const: %d\n",tree->attr.val);
+	          		fprintf(listing, "Const: %d\n",tree->val);
 	          		break;
 	        	case IdK:
-	          		fprintf(listing, "Id: %s\n",tree->attr.name);
+	          		fprintf(listing, "Id: %s\n",tree->name);
 	          		break;
 	        	default:
 	          		fprintf(listing, "Unknown ExpNode kind\n");
 	          		break;
       		}
-    	} else
+    	} else if (tree->nodekind == DeclK) {
+			case VarK:
+				fprintf(listing, "Var: %d\n", tree->name);
+				break;
+			case FunK:
+				fprintf(listing, "Function: %d\n", tree->name);
+				break;
+			case ParamK:
+				fprintf(listing, "Param: %s\n", tree->name);
+				break;
+			default:
+				fprintf(listing, "Unknown DeclNode kind\n");
+				break;
+		} else
 			fprintf(listing, "Unknown node kind\n");
     	for (i = 0; i < MAXCHILDREN ;i++)
          	printTree(tree->child[i]);

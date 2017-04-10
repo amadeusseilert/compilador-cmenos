@@ -1,11 +1,9 @@
 /****************************************************/
-/* File: analyze.c                                  */
-/* Semantic analyzer implementation                 */
-/* for the TINY compiler                            */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: analyse.c                               */
+/* Implementação dos procedimentos que farão		*/
+/* análises de semântica sobre a árvore de sintaxe.	*/
 /****************************************************/
-
 #include "globals.h"
 #include "symtab.h"
 #include "analyze.h"
@@ -20,17 +18,18 @@ static int location = 0;
 */
 static void traverse( TreeNode * t,
 	void (* preProc) (TreeNode *),
-	void (* postProc) (TreeNode *) )
-	{ if (t != NULL)
-		{ preProc(t);
-			{ int i;
-				for (i=0; i < MAXCHILDREN; i++)
-				traverse(t->child[i],preProc,postProc);
+	void (* postProc) (TreeNode *) ) {
+		if (t != NULL) {
+			preProc(t);
+			{
+				int i;
+				for (i = 0; i < MAXCHILDREN; i++)
+				traverse(t->child[i], preProc, postProc);
 			}
 			postProc(t);
 			traverse(t->sibling,preProc,postProc);
 		}
-	}
+}
 
 	/* nullProc is a do-nothing procedure to
 	* generate preorder-only or postorder-only
