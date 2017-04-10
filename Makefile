@@ -1,45 +1,46 @@
 #
 # makefile para o compilador C-
-# GCC
 # Amadeus T. Seilert
 #
 
 CC = gcc
 
-CFLAGS =
+EXE = c-compiler
 
-OBJS = util.o symtab.o lex.yy.o analyze.o parser.tab.o
+CLEAN-CMD = rm -f
 
-parser.tab.c: parser.y parser.h globals.h util.h scanner.h
-	bison -d -v -g parser.y
+CFLAGS = -Wall -g -ggdb3
+
+OBJS = main.o util.o lex.yy.o parser.tab.o
+
+all: parser.tab.c lex.yy.c c-compiler.exe clean
 
 lex.yy.c: scanner.l scanner.h globals.h util.h
 	flex scanner.l
 
+parser.tab.c: parser.y parser.h globals.h util.h scanner.h
+	bison -d parser.y
+
+c-compiler.exe: $(OBJS)
+	$(CC) $(CFLAGS) -o $(EXE) $(OBJS)
+
+main.o: main.c util.h globals.h parser.h scanner.h
+	$(CC) $(CFLAGS) -c main.c
+
 util.o: util.c util.h globals.h
-	$(CC) $(CFLAGS) util.c
+	$(CC) $(CFLAGS) -c util.c
 
-symtab.o: symtab.c symtab.h
-	$(CC) $(CFLAGS) symtab.c
-
-lex.yy.o: lex.yy.c globals.h
-	$(CC) $(CFLAGS) lex.yy.c
-
-analyze.o: analyze.c globals.h symtab.h analyze.h
-	$(CC) $(CFLAGS) -c analyze.c
+lex.yy.o: lex.yy.c globals.h util.h
+	$(CC) $(CFLAGS) -c lex.yy.c
 
 parser.tab.o: parser.tab.c parser.tab.h globals.h util.h scanner.h
-	gcc -c parser.tab.c
-
-main.exe: $(OBJS)
-	$(CC) $(CFLAGS) -o main $(OBJS)
+	$(CC) $(CFLAGS) -c parser.tab.c
 
 clean:
-	-del util.o
-	-del symtab.o
-	-del lex.yy.o
-	-del analyze.o
-	-del parser.tab.o
-	-del parser.tab.c
-	-del parser.tab.h
-	-del lex.yy.c
+	$(CLEAN-CMD) util.o
+	$(CLEAN-CMD) lex.yy.o
+	$(CLEAN-CMD) parser.tab.o
+	$(CLEAN-CMD) parser.tab.c
+	$(CLEAN-CMD) parser.tab.h
+	$(CLEAN-CMD) lex.yy.c
+	$(CLEAN-CMD) main.o

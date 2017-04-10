@@ -58,6 +58,7 @@ whitespace  [ \t]+
 
 "/*"             			{ignore(OC);}
 "*/"             			{return CC;}
+<<EOF>>						{return EOF;}
 .               			{printLexicalError(ERROR);}
 
 %%
@@ -78,8 +79,8 @@ Procedimento responsável em emitir as mensagens de erro léxico no listing.
 */
 void printLexicalError (TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
-	fprintf(listing, "Syntax error at line %d\n",lineno);
-	fprintf(listing, "Token: ");
+	printf("Lexical error at line %d\n",lineno);
+	printf("Token: ");
 	printToken(currentToken, tokenString);
 }
 
@@ -87,8 +88,15 @@ void printLexicalError (TokenType currentToken) {
 Função responsável pela obtenção de um token do arquivo source, caso a flag
 TraceScan for TRUE, todo token identificado será impresso no listing.
 */
-TokenType getToken (void) {
-	TokenType currentToken;
+TokenType getToken(void) {
+	static int firstTime = TRUE;
+  	TokenType currentToken;
+  	if (firstTime) {
+		firstTime = FALSE;
+    	lineno++;
+    	yyin = source;
+    	yyout = listing;
+  	}
   	currentToken = yylex();
   	strncpy(tokenString, yytext, MAXTOKENLEN);
   	if (TraceScan) {

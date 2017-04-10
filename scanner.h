@@ -8,7 +8,7 @@
 #define _SCAN_H_
 
 /* Tamanho máximo que um token pode comportar */
-#define MAXTOKENLEN 40
+#define MAXTOKENLEN 128
 
 /* Lexema de um identificador ou palavra reservada */
 extern char tokenString[MAXTOKENLEN + 1];

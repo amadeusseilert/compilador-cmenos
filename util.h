@@ -24,6 +24,11 @@ Esta função cria um nó do tipo expressão para a construção da árvore de s
 TreeNode * newExpNode(ExpKind);
 
 /*
+Esta função cria um nó do tipo declaração para a construção da árvore de sintaxe.
+*/
+TreeNode * newDeclNode(DeclK kind);
+
+/*
 Função que aloca e cria uma copia de uma string existente.
 */
 char * copyString( char * );
@@ -31,6 +36,6 @@ char * copyString( char * );
 /* procedure printTree prints a syntax tree to the
  * listing file using indentation to indicate subtrees
  */
-// void printTree( TreeNode * );
+void printTree( TreeNode * );
 
 #endif

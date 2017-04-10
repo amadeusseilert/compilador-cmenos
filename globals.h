@@ -25,7 +25,10 @@ arquivos output do Yacc/Bison.
 */
 #ifndef YYPARSER
 
-/* Cabeçalho gerado a partir do 'parser.y'*/
+/*
+Cabeçalho gerado a partir do 'parser.y'. Este cabeçalho vai permitir que os
+valores dos tokens possuam visibilidade global.
+*/
 #include "parser.tab.h"
 
 #endif
@@ -50,7 +53,7 @@ typedef int TokenType;
 
 extern FILE* source; /* Código fonte, arquivo de entrada */
 extern FILE* listing; /* Arquivo para listagem e debug */
-extern FILE* code; /* Arquivo output para a C-Machine */
+//extern FILE* code; /* Arquivo output para a C-Machine */
 
 extern int lineno; /* Contador de linhas para listagem */
 
@@ -58,12 +61,15 @@ extern int lineno; /* Contador de linhas para listagem */
 /***********   Árvore de Sintaxe 	   ************/
 /**************************************************/
 
-typedef enum {StmtK,ExpK} NodeKind;
+typedef enum {StmtK, ExpK, DeclK} NodeKind;
 typedef enum {IfK, WhileK, AssignK, ReturnK} StmtKind;
-typedef enum {OpK,ConstK,IdK} ExpKind;
+typedef enum {OpK, ConstK, IdK} ExpKind;
+typedef enum {VarK, FunK, ParamK} DeclKind;
 
 /* ExpType será usado para análise semântica. Verificação de tipo. */
 typedef enum {Void, Integer, Boolean} ExpType;
+
+typedef enum {Simple, Array, Function, None} IdType;
 
 /* Estrutura de um nó da árvore */
 typedef struct treeNode {
@@ -75,15 +81,14 @@ typedef struct treeNode {
     union {
 		StmtKind stmt;
 		ExpKind exp;
+		DeclK decl;
 	} kind;
 
-    union {
-		TokenType op;
-    	int val;
-        char * name;
-	} attr;
-
+	TokenType op;
+	int val;
+    char * name;
     ExpType type;
+	IdType idtype;
    } TreeNode;
 
 /**************************************************/
@@ -94,7 +99,7 @@ typedef struct treeNode {
 EchoSource = TRUE faz com que o arquivo de entrada seja impresso no arquivo
 listing com a numeração de linhas durante a análise sintática.
 */
-extern int EchoSource;
+//extern int EchoSource;
 
 /*
 TraceScan = TRUE faz com que os tokens identidicados durante o scan sejam
@@ -106,22 +111,23 @@ extern int TraceScan;
 TraceParse = TRUE faz com que a árvore de sintaxe seja impressa no arquivo
 listing na forma linear (utilizando identação para os filhos)
 */
-extern int TraceParse;
+//extern int TraceParse;
 
 /*
 TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo
 listing
 */
-extern int TraceAnalyze;
+//extern int TraceAnalyze;
 
 /*
 TraceCode = TRUE faz com que comentários sejam gerados no arquivo code conforme
 o código é gerado.
 */
-extern int TraceCode;
+//extern int TraceCode;
 
 /*
 Error = TRUE todos os erros são reportados ná análise
 */
+
 extern int Error;
 #endif

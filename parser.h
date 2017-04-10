@@ -7,6 +7,8 @@
 #ifndef _PARSE_H_
 #define _PARSE_H_
 
+#define YYSTYPE TreeNode *
+
 /*
 Função responsável em emitir as mensagens de erro de sintaxe no listing.
 */
@@ -21,6 +23,6 @@ static int yylex (void);
 /*
 Esta função inicia a análise e constroi a árvore de sintaxe.
  */
-TreeNode * parse(void);
+YYSTYPE parse(void);
 
 #endif
