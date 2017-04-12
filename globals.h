@@ -67,9 +67,9 @@ typedef enum {OpK, ConstK, IdK} ExpKind;
 typedef enum {VarK, FunK, ParamK} DeclKind;
 
 /* ExpType será usado para análise semântica. Verificação de tipo. */
-typedef enum {Void, Integer, Boolean} ExpType;
+typedef enum {Void, Integer, Boolean} Type;
 
-typedef enum {Simple, Array, Function, None} IdType;
+typedef enum {Simple, Array, Function} IdType;
 
 /* Estrutura de um nó da árvore */
 typedef struct treeNode {
@@ -87,13 +87,22 @@ typedef struct treeNode {
 	TokenType op;
 	int val;
     char * name;
-    ExpType type;
+    Type type;
 	IdType idtype;
 } TreeNode;
 
 /**************************************************/
 /***********   Flags para debug       ************/
 /**************************************************/
+
+/*
+Esta flag define se ocorrerá a depuração do processo de análise sintática  pelo
+Bison. É impresso no stdout a sequencia de estados da árvore e ações tomadas
+ao longo do reconhecimento de regras.
+
+http://dinosaur.compilertools.net/bison/bison_11.html
+*/
+#define DEBUG_PARSE 0
 
 /*
 EchoSource = TRUE faz com que o arquivo de entrada seja impresso no arquivo

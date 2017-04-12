@@ -6,7 +6,10 @@
 /****************************************************/
 
 %{
-#define YYPARSER /* Distingui o output do Yacc dos outros arquivos de código */
+/* Distingui o output do Yacc dos outros arquivos de código */
+#define YYPARSER
+/* Define que o parser pode estrar no modo de depuração. A flag que efetivamente
+habilita a tarefa é a 'DEBUG_PARSE' em 'globals.h' */
 #define YYDEBUG 1
 
 #include "globals.h"
@@ -17,8 +20,6 @@
 static char * savedName; /* Usado em Mid-Rule */
 static int savedValue; /* Usado em Mid-Rule */
 static int savedLineNo;  /* Usado em Mid-Rule */
-
-static ExpType lastType; /* Usado em declarações */
 
 /*
 Armazena a árvore de sintaxe para uso posterior.
@@ -42,6 +43,7 @@ http://dinosaur.compilertools.net/bison/bison_6.html#SEC57
 %token ID NUM
 %token ASSIGN EQ LT GT LTE GTE DIF PLUS MINUS TIMES OVER
 %token LPAREN RPAREN SEMI COMA LBRCKT RBRCKT LBRACE RBRACE
+%token ERROR OC CC
 
 %nonassoc LT LTE GT GTE EQ DIF
 %left PLUS MINUS
@@ -75,65 +77,77 @@ declaration : var_declaration { $$ = $1; }
 		  	;
 
 var_declaration : type_specifier ID
- 			{
-				/* Como é de interesse obter a string armazenada no token ID e
-				a variável tokenString ('scanner.h') guarda a string do último
-				token lido, faz aqui, o uso de ações em meio de regras
-				('Mid-Rule Actions').
-				https://www.gnu.org/software/bison/manual/html_node/Using-Mid_002dRule-Actions.html
+			{
+				/* Aqui define-se um caso de Mid-Rule Action. É de interesse
+				guardar o valor do token ID, pois se usar a variável
+				tokenString no final da regra (End-Rule Action), ela teria o
+				valor do último lexema da regra, que neste caso, seria ';'
+				(SEMI).
+				https://www.gnu.org/software/bison/manual/html_node/Using-Mid_002dRule-Actions.html#Using-Mid_002dRule-Actions
 				*/
-				savedName = lastIdTokenString;
-				savedLineNo = lineno;
+				savedName = copyString(tokenString);
 			}
 					SEMI
 			{
-				$$ = newDeclNode(VarK);
+				$$ = $1;
+				$$->nodekind = DeclK;
+				$$->kind.decl = VarK;
 				$$->name = savedName;
-				$$->type = lastType;
-				$$->lineno = savedLineNo;
 				$$->idtype = Simple;
 			}
-			| type_specifier ID {
-				savedName = lastIdTokenString;
-				savedLineNo = lineno;
+			| type_specifier ID
+			{
+				savedName = copyString(tokenString);
 			}
-					LBRCKT NUM { savedValue = atoi(tokenString); }
+					LBRCKT NUM
+			{
+				/* Aqui define-se outro caso de Mid-Rule Action. É de interesse
+				guardar o valor do token NUM, pois se usar a variável
+				tokenString no final da regra (End-Rule Action), ela teria o
+				valor do último lexema da regra, que neste caso, seria ';'
+				(SEMI).
+				*/
+				savedValue = atoi(tokenString);
+			}
 					RBRCKT SEMI
 			{
-				$$ = newDeclNode(VarK);
+				$$ = $1;
+				$$->nodekind = DeclK;
+				$$->kind.decl = VarK;
 				$$->name = savedName;
+				$$->idtype = Simple;
 				$$->val = savedValue;
-				$$->type = lastType;
-				$$->lineno = savedLineNo;
 				$$->idtype = Array;
 			}
 			;
 
 type_specifier : INT
 			{
-				lastType = Integer;
+				$$ = newNode();
+				$$->type = Integer;
 			}
 	        | VOID
 			{
-			    lastType = Void;
+				$$ = newNode();
+				$$->type = Void;
 			}
 		    ;
 
 fun_declaration : type_specifier ID
+
 			{
-				savedName = lastIdTokenString;
-				savedLineNo = lineno;
+				$1->name = copyString(tokenString);
 			}
 					LPAREN params RPAREN compound_stmt
 			{
 				/* Uma nó do tipo declaração de função possui como nós filhos
 				os argumentos e uma composição de declarações e expressões.
 				*/
- 			    $$ = newDeclNode(FunK);
+ 			    $$ = $1;
+				$$->nodekind = DeclK;
+				$$->kind.decl = FunK;
  			    $$->name = savedName;
-				$$->lineno = savedLineNo;
 				$$->idtype = Function;
-				$$->type = lastType;
  				$$->child[0] = $5;
  				$$->child[1] = $7;
  			}
@@ -164,25 +178,25 @@ param_list : param_list COMA param
 
 param : 	type_specifier ID
 			{
-				$$ = newDeclNode(ParamK);
-				$$->name = lastIdTokenString;
-				$$->type = lastType;
+				$$ = $1;
+				$$->nodekind = DeclK;
+				$$->kind.decl = ParamK;
+				$$->name = copyString(tokenString);
 				$$->idtype = Simple;
 
 			}
 			| type_specifier ID
 			{
-				savedName = lastIdTokenString;
-				savedLineNo = lineno;
+				savedName = copyString(tokenString)
 			}
-					LBRCKT RBRCKT
+				LBRCKT RBRCKT
 			{
 				/* Um parâmetro é do tipo array se possui '[]' em seguida do
 				identificador */
-				$$ = newDeclNode(ParamK);
+				$$ = $1;
+				$$->nodekind = DeclK;
+				$$->kind.decl = ParamK;
 				$$->name = savedName;
-				$$->lineno = savedLineNo;
-				$$->type = lastType;
 				$$->idtype = Array;
             }
 	  		;
@@ -192,7 +206,9 @@ compound_stmt : LBRACE local_declarations statement_list RBRACE
 				/* Essa regra define que, dentro de uma função, sempre deve ser
 				feito declaração das variáveis antes da utilização delas em
 				eventuais expressões. */
-            	$$ = newStmtNode(CmpdK);
+            	$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = CmpdK;
             	$$->child[0] = $2;
 				$$->child[1] = $3;
 			}
@@ -243,7 +259,9 @@ expression_decl : expression SEMI { $$ = $1; }
 selection_decl : IF LPAREN expression RPAREN statement else_decl
 			{
 				/* A gramática define que o 'else' é opcional */
-                $$ = newStmtNode(IfK);
+                $$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = IfK;
                 $$->child[0] = $3;
             	$$->child[1] = $5;
                 $$->child[2] = $6;
@@ -256,23 +274,34 @@ else_decl : ELSE statement { $$ = $2; }
 
 iteration_decl : WHILE LPAREN expression RPAREN statement
 			{
-				$$ = newStmtNode(WhileK);
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = WhileK;
 				$$->child[0] = $3;
 				$$->child[1] = $5;
 			}
 			;
 
-return_decl : RETURN SEMI { $$ = newStmtNode(ReturnK); }
+return_decl : RETURN SEMI
+			{
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = ReturnK;
+			}
 			| RETURN expression SEMI
 			{
-				$$ = newStmtNode(ReturnK);
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = ReturnK;
 				$$->child[0] = $2;
 			}
 			;
 
 expression : var ASSIGN expression
 			{
-                $$ = newStmtNode(AssignK);
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = AssignK;
                 $$->child[0] = $1;
                 $$->child[1] = $3;
             }
@@ -281,18 +310,22 @@ expression : var ASSIGN expression
 
  var : 		ID
  			{
-            	$$ = newExpNode(IdK);
-				$$->name = lastIdTokenString;
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = IdK;
+				$$->name = copyString(tokenString);
 				$$->idtype = Simple;
          	}
 			| ID
 			{
 				savedLineNo = lineno;
-				savedName = lastIdTokenString;
+				savedName = copyString(tokenString);
 			}
 					LBRCKT expression RBRCKT
 			{
-				$$ = newExpNode(IdK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = IdK;
 				$$->name = savedName;
 				$$->lineno = savedLineNo;
 				$$->idtype = Array;
@@ -311,32 +344,44 @@ simple_expression : additive_expression relop additive_expression
 
 relop : 	LTE
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
             	$$->op = LTE;
             }
           	| GTE
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
                 $$->op = GTE;
             }
           	| LT
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
                 $$->op = LT;
             }
           	| GT
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
 				$$->op = GT;
             }
           	| EQ
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
 				$$->op = EQ;
             }
           	| DIF
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
 				$$->op = DIF;
             }
           	;
@@ -352,12 +397,16 @@ additive_expression : additive_expression addop term
 
 addop :   	PLUS
 			{
-    			$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
     			$$->op = PLUS;
 	    	}
 			| MINUS
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
 				$$->op = MINUS;
 			}
 			;
@@ -373,12 +422,16 @@ term : 		term mulop factor
 
 mulop : 	TIMES
 			{
-    			$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
     			$$->op = TIMES;
     		}
     		| OVER
 			{
-				$$ = newExpNode(OpK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = OpK;
 				$$->op = OVER;
 			}
 			;
@@ -387,7 +440,9 @@ factor : 	LPAREN expression RPAREN { $$ = $2; }
      		| call { $$ = $1; }
      		| NUM
 			{
-    			$$ = newExpNode(ConstK);
+				$$ = newNode();
+				$$->nodekind = ExpK;
+				$$->kind.exp = ConstK;
 				$$->val = atoi(tokenString);
     		}
      		| var { $$ = $1; }
@@ -395,13 +450,15 @@ factor : 	LPAREN expression RPAREN { $$ = $2; }
 
 call : 		ID
  			{
-				savedName = lastIdTokenString;
+				savedName = copyString(tokenString);
 				savedLineNo = lineno;
 			}
 					LPAREN args RPAREN
 			{
 				/* Aqui define-se o nó de invocação para funções */
-                $$ = newStmtNode(CallK);
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = CallK;
 				$$->name = savedName;
 				$$->lineno = savedLineNo;
                 $$->idtype = Function;
@@ -452,7 +509,7 @@ static int yylex(void) {
 Esta função inicia a análise e constroi a árvore de sintaxe.
  */
 YYSTYPE parse(void) {
-	yydebug = 1;
+	yydebug = DEBUG_PARSE; //define se o bison fará depuração da análise
 	yyparse();
 	return savedTree;
 }

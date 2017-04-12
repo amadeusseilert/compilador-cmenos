@@ -10,9 +10,9 @@
 /* Tamanho máximo que um token pode comportar */
 #define MAXTOKENLEN 128
 
-/* Lexema de um identificador ou palavra reservada */
+/* Lexema de um token */
 extern char tokenString[MAXTOKENLEN + 1];
-extern char * lastIdTokenString;
+
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
 entre os tokens OC ("Open Commentary") e CC ("Close Commentary").

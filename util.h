@@ -14,19 +14,9 @@ Procedimento que imprime um token e seu lexema no arquivo listitng
 void printToken(TokenType, const char* );
 
 /*
-Esta função cria um nó do tipo statement para a construção da árvore de sintaxe.
+Esta função cria um nó da árvore de sintaxe.
 */
-TreeNode * newStmtNode(StmtKind);
-
-/*
-Esta função cria um nó do tipo expressão para a construção da árvore de sintaxe.
-*/
-TreeNode * newExpNode(ExpKind);
-
-/*
-Esta função cria um nó do tipo declaração para a construção da árvore de sintaxe.
-*/
-TreeNode * newDeclNode(DeclKind kind);
+TreeNode * newNode();
 
 /*
 Função que aloca e cria uma copia de uma string existente.

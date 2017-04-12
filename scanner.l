@@ -9,9 +9,8 @@
 #include "globals.h"
 #include "util.h"
 #include "scanner.h"
-/* Lexema de um identificador ou palavra reservada */
+/* Lexema de um token */
 char tokenString[MAXTOKENLEN + 1];
-char * lastIdTokenString;
 %}
 
 digit       [0-9]
@@ -53,7 +52,7 @@ whitespace  [ \t]+
 ","             			{return COMA;}
 
 {number}        			{return NUM;}
-{word}({word}|{number})*    {lastIdTokenString = copyString(yytext); return ID;}
+{word}({word}|{number})*    {return ID;}
 {newline}       			{lineno++;}
 {whitespace}    			{/* não toma nenhuma ação */}
 
