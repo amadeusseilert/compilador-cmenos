@@ -8,14 +8,12 @@
 #ifndef _ANALYZE_H_
 #define _ANALYZE_H_
 
-/* Function buildSymtab constructs the symbol
- * table by preorder traversal of the syntax tree
- */
+/* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
+definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode *);
 
-/* Procedure typeCheck performs type checking
- * by a postorder syntax tree traversal
- */
+/* Procedimento que verifica tipos dos nós da árvore de sintaxe. O percurso na
+árvore é definido pela transversal em pós-ordem. */
 void typeCheck(TreeNode *);
 
 #endif

@@ -8,7 +8,7 @@
 #include "symtab.h"
 #include "analyze.h"
 
-/* counter for variable memory locations */
+/* Contador de localização de memória obsoluta */
 static int location = 0;
 
 /* Procedure traverse is a generic recursive
@@ -16,6 +16,10 @@ static int location = 0;
 * it applies preProc in preorder and postProc
 * in postorder to tree pointed to by t
 */
+
+/* Procedimento que permite percorrer a árvore de sintaxe apontado por t. Aplica
+o protótipo de Procedimento preProc para execução em pré-ordem, postProc para
+pós-ordem. */
 static void traverse( TreeNode * t,
 	void (* preProc) (TreeNode *),
 	void (* postProc) (TreeNode *) ) {
@@ -31,56 +35,54 @@ static void traverse( TreeNode * t,
 		}
 }
 
-	/* nullProc is a do-nothing procedure to
-	* generate preorder-only or postorder-only
-	* traversals from traverse
-	*/
-	static void nullProc(TreeNode * t)
-	{ if (t==NULL) return;
-		else return;
-	}
+/* Procedimento "faz nada", possibilitando gerar execuções de pré-ordem apenas,
+ou pós-ordem. */
+static void nullProc(TreeNode * t) {
+	if (t==NULL) return;
+	else return;
+}
 
-	/* Procedure insertNode inserts
-	* identifiers stored in t into
-	* the symbol table
-	*/
-	static void insertNode( TreeNode * t)
-	{ switch (t->nodekind)
-		{ case StmtK:
-			switch (t->kind.stmt)
-			{ case AssignK:
+/* Procedure insertNode inserts
+* identifiers stored in t into
+* the symbol table
+*/
+static void insertNode( TreeNode * t){
+	switch (t->nodekind){
+		case StmtK:
+			switch (t->kind.stmt){
+				case AssignK:
 				case ReadK:
-				if (st_lookup(t->attr.name) == -1)
-				/* not yet in table, so treat as new definition */
-				st_insert(t->attr.name,t->lineno,location++);
-				else
-				/* already in table, so ignore location,
-				add line number of use only */
-				st_insert(t->attr.name,t->lineno,0);
-				break;
+					if (st_lookup(t->attr.name) == -1)
+						/* not yet in table, so treat as new definition */
+						st_insert(t->attr.name,t->lineno,location++);
+					else
+						/* already in table, so ignore location,
+						add line number of use only */
+						st_insert(t->attr.name,t->lineno,0);
+					break;
 				default:
-				break;
+					break;
 			}
 			break;
-			case ExpK:
-			switch (t->kind.exp)
-			{ case IdK:
-				if (st_lookup(t->attr.name) == -1)
-				/* not yet in table, so treat as new definition */
-				st_insert(t->attr.name,t->lineno,location++);
-				else
-				/* already in table, so ignore location,
-				add line number of use only */
-				st_insert(t->attr.name,t->lineno,0);
-				break;
+		case ExpK:
+			switch (t->kind.exp){
+				case IdK:
+					if (st_lookup(t->attr.name) == -1)
+						/* not yet in table, so treat as new definition */
+						st_insert(t->attr.name,t->lineno,location++);
+					else
+						/* already in table, so ignore location,
+						add line number of use only */
+						st_insert(t->attr.name,t->lineno,0);
+					break;
 				default:
-				break;
+					break;
 			}
 			break;
-			default:
+		default:
 			break;
-		}
 	}
+}
 
 	/* Function buildSymtab constructs the symbol
 	* table by preorder traversal of the syntax tree

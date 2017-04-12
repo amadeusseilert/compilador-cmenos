@@ -35,11 +35,11 @@ typedef struct BucketListRec {
  /* Procedimento de inserção um símbolo na tabela. Adiciona também a referência
  do número da linha e na posição na memória. loc é ignorado após a primeira
  inserção do mesmo símbolo */
-void st_insert( char * name, int lineno, int loc );
+void st_insert(char * name, int lineno, int loc );
 
  /* Função que retorna a posição na memória de uma variável. Retorna -1 se não
  encontrada. */
-int st_lookup ( char * name );
+int st_lookup(char * name );
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */

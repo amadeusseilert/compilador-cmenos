@@ -11,8 +11,6 @@
 #include "scanner.h"
 /* Lexema de um identificador ou palavra reservada */
 char tokenString[MAXTOKENLEN + 1];
-/* Armazena a string do último token ID ou NUM reconhecido */
-char lastToken[MAXTOKENLEN + 1];
 %}
 
 digit       [0-9]
@@ -69,7 +67,7 @@ whitespace  [ \t]+
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
 entre os tokens OC ("Open Commentary") e CC ("Close Commentary").
 */
-void ignore (TokenType currentToken) {
+void ignore(TokenType currentToken) {
 
 	while (currentToken != CC){
 		currentToken = yylex();
@@ -79,7 +77,7 @@ void ignore (TokenType currentToken) {
 /*
 Procedimento responsável em emitir as mensagens de erro léxico no listing.
 */
-void printLexicalError (TokenType currentToken) {
+void printLexicalError(TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
 	printf("Lexical error at line %d\n",lineno);
 	printf("Token: ");
@@ -90,7 +88,7 @@ void printLexicalError (TokenType currentToken) {
 Função responsável pela obtenção de um token do arquivo source, caso a flag
 TraceScan for TRUE, todo token identificado será impresso no listing.
 */
-TokenType getToken(void) {
+TokenType getToken(void){
 	static int firstTime = TRUE;
   	TokenType currentToken;
   	if (firstTime) {
@@ -100,13 +98,10 @@ TokenType getToken(void) {
     	yyout = listing;
   	}
   	currentToken = yylex();
-  	strncpy(tokenString, yytext, MAXTOKENLEN);
-	if (currentToken == ID || currentToken == NUM)
-		strncpy(lastToken, yytext, MAXTOKENLEN);
-
+  	strncpy(tokenString,yytext,MAXTOKENLEN);
   	if (TraceScan) {
-    	fprintf(listing, "\t%d: ", lineno);
-    	printToken(currentToken, tokenString);
+    	fprintf(listing,"\t%d: ",lineno);
+    	printToken(currentToken,tokenString);
   	}
   	return currentToken;
 }

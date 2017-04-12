@@ -48,9 +48,11 @@ int Error = FALSE;
 O executável deve ser chamado passando um argumento, que será o
 arquivo de entrada 'source'.
 */
-int main( int argc, char * argv[] ) {
+int main(int argc, char * argv[]) {
 
 	YYSTYPE syntaxTree; /*árvore de sintaxe */
+
+	char inputName[128];
 
 	if (argc != 2){ /* Verifica se a quantidade de argumentos é válida */
 		fprintf(stderr,"usage: %s <input>\n", argv[0]);
@@ -65,8 +67,8 @@ int main( int argc, char * argv[] ) {
 	}
 
 	listing = stdout; /* Envia o arquivo de depuração para o stdout */
-	fprintf(listing, "\nC MINUS COMPILATION\n");
-
+	fprintf(listing, "\nC MINUS COMPILATION\n\n");
+	fprintf(listing, "\nIdentified Tokens:\n");
 #if NO_PARSE
 	while (getToken() != EOF);
 #else

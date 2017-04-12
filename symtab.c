@@ -10,9 +10,9 @@
 #include <string.h>
 #include "symtab.h"
 
-/* Função hashing. Resnponsável por gerar um índice a partir de um nome de
+/* Função hashing. Responsável por gerar um índice a partir de um nome de
 variável 'key' */
-static int hash ( char * key ) {
+static int hash (char * key ) {
 	int temp = 0;
 	int i = 0;
 	while (key[i] != '\0') {
@@ -28,7 +28,7 @@ static BucketList hashTable[SIZE];
 /* Procedimento de inserção um símbolo na tabela. Adiciona também a referência
 do número da linha e na posição na memória. loc é ignorado após a primeira
 inserção do mesmo símbolo */
-void st_insert( char * name, int lineno, int loc ) {
+void st_insert(char * name, int lineno, int loc ) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
 	/* Mesmo estando no mesmo índice do bucket, pode ser que o primeiro símbolo
@@ -58,7 +58,7 @@ void st_insert( char * name, int lineno, int loc ) {
 
 /* Função que retorna a posição na memória de uma variável. Retorna -1 se não
 encontrada. */
-int st_lookup ( char * name ) {
+int st_lookup (char * name ) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
 	while ((l != NULL) && (strcmp(name,l->name) != 0))

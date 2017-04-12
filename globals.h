@@ -81,7 +81,7 @@ typedef struct treeNode {
     union {
 		StmtKind stmt;
 		ExpKind exp;
-		DeclK decl;
+		DeclKind decl;
 	} kind;
 
 	TokenType op;
@@ -89,7 +89,7 @@ typedef struct treeNode {
     char * name;
     ExpType type;
 	IdType idtype;
-   } TreeNode;
+} TreeNode;
 
 /**************************************************/
 /***********   Flags para debug       ************/

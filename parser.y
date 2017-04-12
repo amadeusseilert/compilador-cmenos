@@ -93,7 +93,7 @@ var_declaration:   	type_specifier ID SEMI
  			{
 				/* Uma declaração de variável simples */
               	$$ = newDeclNode(VarK);
-				$$->name = copyString(lastToken);
+				$$->name = copyString(tokenString);
 				$$->idtype = Simple;
 				$$->type = lastType;
 
@@ -101,17 +101,17 @@ var_declaration:   	type_specifier ID SEMI
 			|		type_specifier ID
 			{
 				/* Como é de interesse obter a string armazenada no token ID e
-				a variável tokeString ('scanner.h') guarda a string do último
+				a variável tokenString ('scanner.h') guarda a string do último
 				token lido, faz aqui, o uso de ações em meio de regras
 				('Mid-Rule Actions').*/
-				savedLineNo = lineno;
 				savedName = copyString(tokenString);
+				savedLineNo = lineno;
 			}
 					LBRCKT NUM RBRCKT SEMI
 			{
 				$$ = newDeclNode(VarK);
-				$$->name = savedName
-				$$->val = atoi(lastToken);
+				$$->name = savedName;
+				$$->val = atoi(tokenString);
 				$$->type = lastType;
 				$$->lineno = savedLineNo;
 				$$->idtype = Array;
@@ -130,8 +130,8 @@ type_specifier:  	INT
 
 fun_declaration:    type_specifier ID
 			{
-				savedLineNo = lineno;
 				savedName = copyString(tokenString);
+				savedLineNo = lineno;
 			}
 					LPAREN params RPAREN compound_stmt
 			{
@@ -186,12 +186,18 @@ param:           	type_specifier ID
 				$$->idtype = Simple;
 
 			}
-			|		type_specifier ID LBRCKT RBRCKT
+			|		type_specifier ID
+			{
+				savedName = copyString(tokenString);
+				savedLineNo = lineno;
+			}
+					LBRCKT RBRCKT
 			{
 				/* Um parâmetro é do tipo array se possui '[]' em seguida do
 				identificador */
 				$$ = newDeclNode(ParamK);
-				$$->name = copyString(lastToken);
+				$$->name = savedName;
+				$$->lineno = savedLineNo;
 				$$->type = lastType;
 				$$->idtype = Array;
             }
@@ -213,7 +219,7 @@ local_declarations:  local_declarations  var_declaration
 				if( $1 != NULL ){
     				$$ = $1;
     				YYSTYPE t = $$;
-    				while ( t->sibling != NULL )
+    				while (t->sibling != NULL)
     					t = t->sibling;
     				t->sibling = $2;
     			} else {
@@ -231,7 +237,7 @@ statement_list:		statement_list statement
             	if( $1 != NULL ){
                     $$ = $1;
     				YYSTYPE t = $$;
-    				while( t->sibling != NULL )
+    				while(t->sibling != NULL)
     					t = t->sibling;
     				t->sibling = $2;
     			} else {
@@ -507,11 +513,14 @@ arg_list:  			arg_list COMA expression
             }
          	;
 
+
+
+
 %%
 /*
 Função responsável em emitir as mensagens de erro de sintaxe no listing.
 */
-int yyerror (char * message) {
+int yyerror(char * message) {
 	printf("Syntax error at line %d: %s\n", lineno, message);
 	printf("Current token: ");
 	printToken(yychar, tokenString);
@@ -523,14 +532,14 @@ int yyerror (char * message) {
 Esta função invoca a função getToken para criar um output do Yacc/Bison
 compatível com versões mais antigas do Lex.
 */
-static int yylex (void) {
+static int yylex(void) {
 	return getToken();
 }
 
 /*
 Esta função inicia a análise e constroi a árvore de sintaxe.
  */
-YYSTYPE parse (void) {
+YYSTYPE parse(void) {
 	yyparse();
 	return savedTree;
 }
