@@ -21,14 +21,14 @@ EXE = c-compiler
 
 CLEAN-CMD = rm -f
 
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 
 OBJS = main.o util.o lex.yy.o parser.tab.o
 
 all: parser.tab.c lex.yy.c c-compiler.exe clean
 
 parser.tab.c: parser.y parser.h globals.h util.h scanner.h
-	bison -d parser.y
+	bison -d -v parser.y
 
 lex.yy.c: scanner.l scanner.h globals.h util.h
 	flex scanner.l

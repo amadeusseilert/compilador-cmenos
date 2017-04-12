@@ -62,12 +62,12 @@ int main(int argc, char * argv[]) {
 	strcpy(inputName, argv[1]);
 	source = fopen(inputName, "r"); /* Tenta abrir o arquivo de entrada */
 	if (source == NULL){
-		fprintf(stderr, "Error at openning file %s\n", inputName);
+		fprintf(stderr, ANSI_COLOR_RED "Error at openning file %s" ANSI_COLOR_RESET "\n" , inputName);
 		exit(1);
 	}
 
 	listing = stdout; /* Envia o arquivo de depuração para o stdout */
-	fprintf(listing, "\nC MINUS COMPILATION\n\n");
+	fprintf(listing, "\n" ANSI_COLOR_YELLOW "C MINUS COMPILATION" ANSI_COLOR_RESET "\n");
 	fprintf(listing, "\nIdentified Tokens:\n");
 #if NO_PARSE
 	while (getToken() != EOF);
@@ -78,7 +78,7 @@ int main(int argc, char * argv[]) {
 		/* Caso a flag de TraceScan for TRUE, a árvore de sintaxe é impressa no
 		listing */
 
-      	fprintf(listing, "\nSyntax tree:\n");
+      	fprintf(listing, "\n"ANSI_COLOR_YELLOW "Syntax tree:"ANSI_COLOR_RESET"\n");
       	printTree(syntaxTree);
     }
 

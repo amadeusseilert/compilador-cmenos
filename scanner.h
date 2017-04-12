@@ -12,8 +12,7 @@
 
 /* Lexema de um identificador ou palavra reservada */
 extern char tokenString[MAXTOKENLEN + 1];
-/* Armazena a string do último token ID ou NUM reconhecido */
-extern char lastToken[MAXTOKENLEN + 1];
+extern char * lastIdTokenString;
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
 entre os tokens OC ("Open Commentary") e CC ("Close Commentary").

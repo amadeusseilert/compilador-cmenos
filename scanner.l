@@ -11,6 +11,7 @@
 #include "scanner.h"
 /* Lexema de um identificador ou palavra reservada */
 char tokenString[MAXTOKENLEN + 1];
+char * lastIdTokenString;
 %}
 
 digit       [0-9]
@@ -52,7 +53,7 @@ whitespace  [ \t]+
 ","             			{return COMA;}
 
 {number}        			{return NUM;}
-{word}({word}|{number})*    {return ID;}
+{word}({word}|{number})*    {lastIdTokenString = copyString(yytext); return ID;}
 {newline}       			{lineno++;}
 {whitespace}    			{/* não toma nenhuma ação */}
 
@@ -79,7 +80,7 @@ Procedimento responsável em emitir as mensagens de erro léxico no listing.
 */
 void printLexicalError(TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
-	printf("Lexical error at line %d\n",lineno);
+	printf(ANSI_COLOR_RED "Lexical Error" ANSI_COLOR_RESET " at line %d\n",lineno);
 	printf("Token: ");
 	printToken(currentToken, tokenString);
 }
@@ -98,10 +99,10 @@ TokenType getToken(void){
     	yyout = listing;
   	}
   	currentToken = yylex();
-  	strncpy(tokenString,yytext,MAXTOKENLEN);
+  	strncpy(tokenString, yytext, MAXTOKENLEN);
   	if (TraceScan) {
-    	fprintf(listing,"\t%d: ",lineno);
-    	printToken(currentToken,tokenString);
+    	fprintf(listing,"\t%d: ", lineno);
+    	printToken(currentToken, tokenString);
   	}
   	return currentToken;
 }

@@ -7,14 +7,16 @@
 
 %{
 #define YYPARSER /* Distingui o output do Yacc dos outros arquivos de código */
+#define YYDEBUG 1
 
 #include "globals.h"
 #include "util.h"
 #include "scanner.h"
 #include "parser.h"
 
-static char * savedName; /* Usado em atribuições */
-static int savedLineNo;  /* Usado em atribuições */
+static char * savedName; /* Usado em Mid-Rule */
+static int savedValue; /* Usado em Mid-Rule */
+static int savedLineNo;  /* Usado em Mid-Rule */
 
 static ExpType lastType; /* Usado em declarações */
 
@@ -40,8 +42,6 @@ http://dinosaur.compilertools.net/bison/bison_6.html#SEC57
 %token ID NUM
 %token ASSIGN EQ LT GT LTE GTE DIF PLUS MINUS TIMES OVER
 %token LPAREN RPAREN SEMI COMA LBRCKT RBRCKT LBRACE RBRACE
-%token ERROR
-%token OC CC
 
 %nonassoc LT LTE GT GTE EQ DIF
 %left PLUS MINUS
@@ -49,13 +49,10 @@ http://dinosaur.compilertools.net/bison/bison_6.html#SEC57
 
 %%
 
-program:    		declaration_list
-			{
-                savedTree = $1; /* Define o nó raiz da árvore */
-            }
+program : 	declaration_list { savedTree = $1; }
         	;
 
-declaration_list:	declaration_list  declaration
+declaration_list : declaration_list  declaration
 			{
 				/* Itera por todos os nós previamentes reconhecidos como
 				declaration, o último nó reconhecido se torna irmão do nó que
@@ -69,68 +66,62 @@ declaration_list:	declaration_list  declaration
             	} else
                 	$$ = $2;
             }
-			|		declaration
-			{
-				$$ = $1;
-			}
+			| declaration { $$ = $1; }
 			;
 
-declaration:		var_declaration
- 			{
-				$$ = $1;
-			}
-		  	|		fun_declaration
-			{
-				$$ = $1;
-			}
-      		| 		error
-			{
-        		$$ = NULL;
-      		}
+declaration : var_declaration { $$ = $1; }
+		  	| fun_declaration { $$ = $1; }
+      		| error { $$ = NULL; }
 		  	;
 
-var_declaration:   	type_specifier ID SEMI
+var_declaration : type_specifier ID
  			{
-				/* Uma declaração de variável simples */
-              	$$ = newDeclNode(VarK);
-				$$->name = copyString(tokenString);
-				$$->idtype = Simple;
-				$$->type = lastType;
-
-			}
-			|		type_specifier ID
-			{
 				/* Como é de interesse obter a string armazenada no token ID e
 				a variável tokenString ('scanner.h') guarda a string do último
 				token lido, faz aqui, o uso de ações em meio de regras
-				('Mid-Rule Actions').*/
-				savedName = copyString(tokenString);
+				('Mid-Rule Actions').
+				https://www.gnu.org/software/bison/manual/html_node/Using-Mid_002dRule-Actions.html
+				*/
+				savedName = lastIdTokenString;
 				savedLineNo = lineno;
 			}
-					LBRCKT NUM RBRCKT SEMI
+					SEMI
 			{
 				$$ = newDeclNode(VarK);
 				$$->name = savedName;
-				$$->val = atoi(tokenString);
+				$$->type = lastType;
+				$$->lineno = savedLineNo;
+				$$->idtype = Simple;
+			}
+			| type_specifier ID {
+				savedName = lastIdTokenString;
+				savedLineNo = lineno;
+			}
+					LBRCKT NUM { savedValue = atoi(tokenString); }
+					RBRCKT SEMI
+			{
+				$$ = newDeclNode(VarK);
+				$$->name = savedName;
+				$$->val = savedValue;
 				$$->type = lastType;
 				$$->lineno = savedLineNo;
 				$$->idtype = Array;
 			}
 			;
 
-type_specifier:  	INT
+type_specifier : INT
 			{
-				lastType = Integer
+				lastType = Integer;
 			}
-	        |  		VOID
+	        | VOID
 			{
-			    lastType = Void
+			    lastType = Void;
 			}
 		    ;
 
-fun_declaration:    type_specifier ID
+fun_declaration : type_specifier ID
 			{
-				savedName = copyString(tokenString);
+				savedName = lastIdTokenString;
 				savedLineNo = lineno;
 			}
 					LPAREN params RPAREN compound_stmt
@@ -148,15 +139,11 @@ fun_declaration:    type_specifier ID
  			}
  			;
 
-params:    			param_list
-			{
-	           $$ = $1;
-		   	}
-	  		|    	VOID
+params : 	param_list { $$ = $1; }
+	  		| VOID
 	  		;
 
-param_list:     	param_list COMA param
-
+param_list : param_list COMA param
 			{
 				/*
 				Itera sobre os argumentos e associa os nós irmãos do último
@@ -172,23 +159,20 @@ param_list:     	param_list COMA param
 					$$ = $3;
 				}
 			}
-			|   	param
-			{
-				$$ = $1;
-			}
+			| param { $$ = $1; }
 			;
 
-param:           	type_specifier ID
+param : 	type_specifier ID
 			{
 				$$ = newDeclNode(ParamK);
-				$$->name = copyString(tokenString);
+				$$->name = lastIdTokenString;
 				$$->type = lastType;
 				$$->idtype = Simple;
 
 			}
-			|		type_specifier ID
+			| type_specifier ID
 			{
-				savedName = copyString(tokenString);
+				savedName = lastIdTokenString;
 				savedLineNo = lineno;
 			}
 					LBRCKT RBRCKT
@@ -203,7 +187,7 @@ param:           	type_specifier ID
             }
 	  		;
 
-compound_stmt:  	LBRACE local_declarations statement_list RBRACE
+compound_stmt : LBRACE local_declarations statement_list RBRACE
 			{
 				/* Essa regra define que, dentro de uma função, sempre deve ser
 				feito declaração das variáveis antes da utilização delas em
@@ -214,7 +198,7 @@ compound_stmt:  	LBRACE local_declarations statement_list RBRACE
 			}
 			;
 
-local_declarations:  local_declarations  var_declaration
+local_declarations : local_declarations var_declaration
 			{
 				if( $1 != NULL ){
     				$$ = $1;
@@ -226,13 +210,10 @@ local_declarations:  local_declarations  var_declaration
     				$$ = $2;
     			}
     		}
-			|
-			{
-		    	$$ = NULL;
-			}
+			| { $$ = NULL; }
 			;
 
-statement_list:		statement_list statement
+statement_list : statement_list statement
 			{
             	if( $1 != NULL ){
                     $$ = $1;
@@ -244,49 +225,22 @@ statement_list:		statement_list statement
     				$$ = $2;
     			}
     		}
-            |
-			{
-            	$$ = NULL;
-            }
+            | { $$ = NULL; }
             ;
 
-statement:     		expression_decl
-			{
-            	$$ = $1;
-            }
-         	|     	compound_stmt
-			{
-                $$ = $1;
-            }
-         	|   	selection_decl
-			{
-                $$ = $1;
-       		}
-         	|	   	iteration_decl
-			{
-            	$$ = $1;
-            }
-         	|		return_decl
-			{
-                $$ = $1;
-            }
-            | 		error
-			{
-            	$$ = NULL;
-            }
+statement : expression_decl { $$ = $1; }
+         	| compound_stmt { $$ = $1; }
+         	| selection_decl { $$ = $1; }
+         	| iteration_decl { $$ = $1; }
+         	| return_decl { $$ = $1; }
+            | error { $$ = NULL; }
          	;
 
-expression_decl:	expression SEMI
-			{
-				$$ = $1;
-			}
-			|		SEMI
-			{
-				$$ = NULL;
-			}
+expression_decl : expression SEMI { $$ = $1; }
+			| SEMI { $$ = NULL; }
 			;
 
-selection_decl:		IF LPAREN expression RPAREN statement else_decl
+selection_decl : IF LPAREN expression RPAREN statement else_decl
 			{
 				/* A gramática define que o 'else' é opcional */
                 $$ = newStmtNode(IfK);
@@ -296,17 +250,11 @@ selection_decl:		IF LPAREN expression RPAREN statement else_decl
             }
             ;
 
-else_decl:  		ELSE statement
-			{
-                $$ = $2;
-            }
-         	|
-			{
-            	$$ = NULL; /* else opcional */
-            }
+else_decl : ELSE statement { $$ = $2; }
+         	| { $$ = NULL; }
         	;
 
-iteration_decl:  	WHILE LPAREN expression RPAREN statement
+iteration_decl : WHILE LPAREN expression RPAREN statement
 			{
 				$$ = newStmtNode(WhileK);
 				$$->child[0] = $3;
@@ -314,39 +262,33 @@ iteration_decl:  	WHILE LPAREN expression RPAREN statement
 			}
 			;
 
-return_decl:   		RETURN SEMI
-			{
-				$$ = newStmtNode(ReturnK);
-			}
-			|   	RETURN expression SEMI
+return_decl : RETURN SEMI { $$ = newStmtNode(ReturnK); }
+			| RETURN expression SEMI
 			{
 				$$ = newStmtNode(ReturnK);
 				$$->child[0] = $2;
 			}
 			;
 
-expression:  		var ASSIGN expression
+expression : var ASSIGN expression
 			{
                 $$ = newStmtNode(AssignK);
                 $$->child[0] = $1;
                 $$->child[1] = $3;
             }
-         	|  		simple_expression
-			{
-                $$ = $1;
-            }
+         	| simple_expression { $$ = $1; }
          	;
 
- var:   			ID
+ var : 		ID
  			{
             	$$ = newExpNode(IdK);
-				$$->name = copyString(tokenString);
+				$$->name = lastIdTokenString;
 				$$->idtype = Simple;
          	}
-			| 		ID
+			| ID
 			{
 				savedLineNo = lineno;
-				savedName = copyString(tokenString);
+				savedName = lastIdTokenString;
 			}
 					LBRCKT expression RBRCKT
 			{
@@ -358,120 +300,102 @@ expression:  		var ASSIGN expression
 			}
     		;
 
-simple_expression: 	additive_expression relop additive_expression
+simple_expression : additive_expression relop additive_expression
 			{
 				$$ = $2;
                 $$->child[0] = $1;
                 $$->child[1] = $3;
             }
-            |  		additive_expression
-			{
-                $$ = $1;
-            }
+            | additive_expression { $$ = $1; }
             ;
 
-relop:     			LTE
+relop : 	LTE
 			{
 				$$ = newExpNode(OpK);
             	$$->op = LTE;
             }
-          	|     	GTE
+          	| GTE
 			{
 				$$ = newExpNode(OpK);
                 $$->op = GTE;
             }
-          	|     	LT
+          	| LT
 			{
 				$$ = newExpNode(OpK);
                 $$->op = LT;
             }
-          	|     	GT
+          	| GT
 			{
 				$$ = newExpNode(OpK);
 				$$->op = GT;
             }
-          	|     	EQ
+          	| EQ
 			{
 				$$ = newExpNode(OpK);
 				$$->op = EQ;
             }
-          	|     	DIF
+          	| DIF
 			{
 				$$ = newExpNode(OpK);
 				$$->op = DIF;
             }
           	;
 
-additive_expression: additive_expression addop term
+additive_expression : additive_expression addop term
 			{
 				$$ = $2;
 				$$->child[0] = $1;
 				$$->child[1] = $3;
 			}
-            | 		term
-			{
-            	$$ = $1;
-            }
+            | term { $$ = $1; }
             ;
 
-addop:   			PLUS
+addop :   	PLUS
 			{
     			$$ = newExpNode(OpK);
     			$$->op = PLUS;
 	    	}
-			|   	MINUS
+			| MINUS
 			{
 				$$ = newExpNode(OpK);
 				$$->op = MINUS;
 			}
 			;
 
-term:  				term mulop factor
+term : 		term mulop factor
 			{
     			$$ = $2;
     			$$->child[0]=$1;
     			$$->child[1]=$3;
     		}
-     		|  		factor
-			{
-				$$ = $1;
-	    	}
+     		|  		factor { $$ = $1; }
 			;
 
-mulop:   			TIMES
+mulop : 	TIMES
 			{
     			$$ = newExpNode(OpK);
     			$$->op = TIMES;
     		}
-    		|   	OVER
+    		| OVER
 			{
 				$$ = newExpNode(OpK);
 				$$->op = OVER;
 			}
 			;
 
-factor:  			LPAREN expression RPAREN
-			{
-    			$$ = $2;
-        	}
-     		|  		call
-			{
-    			$$ = $1;
-    		}
-     		|  		NUM
+factor : 	LPAREN expression RPAREN { $$ = $2; }
+     		| call { $$ = $1; }
+     		| NUM
 			{
     			$$ = newExpNode(ConstK);
 				$$->val = atoi(tokenString);
     		}
-     		|  		var
-			{
-       			$$ = $1;
-       		}
+     		| var { $$ = $1; }
      		;
 
-call:   			ID
+call : 		ID
  			{
-				savedName = copyString(tokenString);
+				savedName = lastIdTokenString;
 				savedLineNo = lineno;
 			}
 					LPAREN args RPAREN
@@ -485,17 +409,11 @@ call:   			ID
             }
         	;
 
-args: 				arg_list
-			{
-            	$$ = $1;
-        	}
-    		|
-			{
-            	$$ = NULL;
-        	}
+args : 		arg_list { $$ = $1; }
+    		| { $$ = NULL; }
     		;
 
-arg_list:  			arg_list COMA expression
+arg_list :	arg_list COMA expression
 			{
                 YYSTYPE t = $1;
 			  	if (t != NULL){
@@ -507,21 +425,15 @@ arg_list:  			arg_list COMA expression
 					$$ = $3;
 				}
             }
-         	|  		expression
-			{
-                $$ = $1;
-            }
+         	| expression { $$ = $1; }
          	;
-
-
-
 
 %%
 /*
 Função responsável em emitir as mensagens de erro de sintaxe no listing.
 */
 int yyerror(char * message) {
-	printf("Syntax error at line %d: %s\n", lineno, message);
+	printf(ANSI_COLOR_RED "Syntax Error" ANSI_COLOR_RESET " at line %d: %s\n", lineno, message);
 	printf("Current token: ");
 	printToken(yychar, tokenString);
 	Error = TRUE;
@@ -540,6 +452,7 @@ static int yylex(void) {
 Esta função inicia a análise e constroi a árvore de sintaxe.
  */
 YYSTYPE parse(void) {
+	yydebug = 1;
 	yyparse();
 	return savedTree;
 }
