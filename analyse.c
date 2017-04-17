@@ -11,11 +11,6 @@
 /* Contador de localização de memória obsoluta */
 static int location = 0;
 
-/* Procedure traverse is a generic recursive
-* syntax tree traversal routine:
-* it applies preProc in preorder and postProc
-* in postorder to tree pointed to by t
-*/
 
 /* Procedimento que permite percorrer a árvore de sintaxe apontado por t. Aplica
 o protótipo de Procedimento preProc para execução em pré-ordem, postProc para
@@ -84,77 +79,103 @@ static void insertNode( TreeNode * t){
 	}
 }
 
-	/* Function buildSymtab constructs the symbol
-	* table by preorder traversal of the syntax tree
-	*/
-	void buildSymtab(TreeNode * syntaxTree)
-	{ traverse(syntaxTree,insertNode,nullProc);
-		if (TraceAnalyze)
-		{ fprintf(listing,"\nSymbol table:\n\n");
+/* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
+definido pela transversal em pré-ordem. */
+void buildSymtab(TreeNode * syntaxTree) {
+	traverse(syntaxTree,insertNode,nullProc);
+	if (TraceAnalyze){
+		fprintf(listing, "\nSymbol table:\n\n");
 		printSymTab(listing);
 	}
 }
 
-static void typeError(TreeNode * t, char * message)
-{ fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
-Error = TRUE;
+/* Procedimento que aponta um erro semântico de tipo. */
+static void printSemanticError(TreeNode * t, char * message) {
+	fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
+	Error = TRUE;
 }
 
-/* Procedure checkNode performs
-* type checking at a single tree node
-*/
-static void checkNode(TreeNode * t)
-{ switch (t->nodekind)
-	{ case ExpK:
-		switch (t->kind.exp)
-		{ case OpK:
-			if ((t->child[0]->type != Integer) ||
-			(t->child[1]->type != Integer))
-			typeError(t,"Op applied to non-integer");
-			if ((t->attr.op == EQ) || (t->attr.op == LT))
-			t->type = Boolean;
-			else
-			t->type = Integer;
-			break;
-			case ConstK:
-			case IdK:
-			t->type = Integer;
-			break;
-			default:
-			break;
-		}
+/* Procedimento que executa a verificação de tipo de um nó da árvore */
+static void checkNode(TreeNode * t) {
+	switch (t->nodekind){
+		case ExpK:
+			switch (t->kind.exp){
+				/* verifica se um nó do tipo operação possui ambos os filhos
+				nós de tipo inteiro */
+				case OpK:
+					if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer))
+						printSemanticError(t, "Op applied to non-integer");
+					/* Atribui tipo booleano a operações de comparação */
+					if ((t->attr.op == EQ) ||
+						(t->attr.op == DIF) ||
+						(t->attr.op == LT) ||
+						(t->attr.op == GT) ||
+						(t->attr.op == LTE) ||
+						(t->attr.op == GTE) ||)
+						t->type = Boolean;
+					else
+						/* O restantante das operações  */
+						t->type = Integer;
+					break;
+				case ConstK:
+				case IdK:
+					t->type = Integer;
+					break;
+				default:
+					break;
+			}
 		break;
 		case StmtK:
-		switch (t->kind.stmt)
-		{ case IfK:
-			if (t->child[0]->type == Integer)
-			typeError(t->child[0],"if test is not Boolean");
+			switch (t->kind.stmt) {
+				case IfK:
+					/* A expressão dentro do teste do if deve ser do tipo
+					booleano */
+					if (t->child[0]->type != Boolean)
+						printSemanticError(t->child[0], "if test is not Boolean");
+					break;
+				case AssignK:
+					/* Como só é possível a declaração de variáveis do tipo
+					inteiro, a atribuição deve ser dada a uma variável inteira */
+					if (t->child[0]->type != Integer)
+						printSemanticError(t->child[0], "assignment of non-integer value");
+					break;
+				case WhileK:
+					/* A expressão dentro do teste do laço deve ser do tipo
+					booleano */
+					if (t->child[0]->type != Boolean)
+						printSemanticError(t->child[0], "while test is not Boolean");
+					break;
+				case ReturnK:
+					/* Se */
+					if (t->child[0] != NULL && t->child[0]->type != Integer)
+						printSemanticError(t->child[1],"function returns non-integer value");
+				break;
+				default:
+				break;
+			}
 			break;
-			case AssignK:
-			if (t->child[0]->type != Integer)
-			typeError(t->child[0],"assignment of non-integer value");
-			break;
-			case WriteK:
-			if (t->child[0]->type != Integer)
-			typeError(t->child[0],"write of non-integer value");
-			break;
-			case RepeatK:
-			if (t->child[1]->type == Integer)
-			typeError(t->child[1],"repeat test is not Boolean");
-			break;
-			default:
-			break;
-		}
-		break;
+		case DeclK:
+			switch (t->kind.decl) {
+				case VarK:
+					if (t->type != Integer)
+						printSemanticError(t->child[0], "variable type is not integer");
+					break;
+				case ParamK:
+					if (t->type != Integer)
+						printSemanticError(t->child[0], "parameter type is not integer");
+					break;
+				case FunK:
+					if (t->type != Integer || t->type != Void)
+						printSemanticError(t->child[0], "function type must be either integer or void");
+					break;
+			}
 		default:
-		break;
+			break;
 
 	}
 }
 
-/* Procedure typeCheck performs type checking
-* by a postorder syntax tree traversal
-*/
-void typeCheck(TreeNode * syntaxTree)
-{ traverse(syntaxTree,nullProc,checkNode);
+/* Procedimento em pré-ordem para verificar os tipos dos nós da árvore */
+void typeCheck(TreeNode * syntaxTree) {
+	traverse(syntaxTree, nullProc, checkNode);
 }

@@ -1,6 +1,8 @@
-int main(void) {
+int a[2];
 
-	int a;
+int main(int k) {
 
-	return a;
+	int n;
+	n = 10;
+	return (a[0] + k) * ((a[1] + k) + n);
 }

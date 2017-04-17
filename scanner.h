@@ -12,7 +12,7 @@
 
 /* Lexema de um token */
 extern char tokenString[MAXTOKENLEN + 1];
-
+extern char lastTokenString[MAXTOKENLEN + 1];
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
 entre os tokens OC ("Open Commentary") e CC ("Close Commentary").

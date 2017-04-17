@@ -16,8 +16,12 @@ habilita a tarefa é a 'DEBUG_PARSE' em 'globals.h' */
 #include "util.h"
 #include "scanner.h"
 #include "parser.h"
-
-static char * savedName; /* Usado em Mid-Rule */
+/* Em caso de modificações na gramática para atribuição de expressão direto
+na declaração de variáveis, é necessário utilizar um vetor de nomes salvos */
+static char * savedName; /* Usado em Mid-Rule para expressões*/
+/* Em caso de modificações na gramática para a possibilidade da utilização de
+funções anônimas, é necessário utilizar um vetor de nomes salvos.*/
+static char * savedFunctionName; /* Usado em Mid-Rule para expressões */
 static int savedValue; /* Usado em Mid-Rule */
 static int savedLineNo;  /* Usado em Mid-Rule */
 
@@ -80,12 +84,12 @@ var_declaration : type_specifier ID
 			{
 				/* Aqui define-se um caso de Mid-Rule Action. É de interesse
 				guardar o valor do token ID, pois se usar a variável
-				tokenString no final da regra (End-Rule Action), ela teria o
+				lastTokenString no final da regra (End-Rule Action), ela teria o
 				valor do último lexema da regra, que neste caso, seria ';'
 				(SEMI).
 				https://www.gnu.org/software/bison/manual/html_node/Using-Mid_002dRule-Actions.html#Using-Mid_002dRule-Actions
 				*/
-				savedName = copyString(tokenString);
+				savedName = copyString(lastTokenString);
 			}
 					SEMI
 			{
@@ -97,13 +101,13 @@ var_declaration : type_specifier ID
 			}
 			| type_specifier ID
 			{
-				savedName = copyString(tokenString);
+				savedName = copyString(lastTokenString);
 			}
 					LBRCKT NUM
 			{
 				/* Aqui define-se outro caso de Mid-Rule Action. É de interesse
 				guardar o valor do token NUM, pois se usar a variável
-				tokenString no final da regra (End-Rule Action), ela teria o
+				lastTokenString no final da regra (End-Rule Action), ela teria o
 				valor do último lexema da regra, que neste caso, seria ';'
 				(SEMI).
 				*/
@@ -136,7 +140,7 @@ type_specifier : INT
 fun_declaration : type_specifier ID
 
 			{
-				$1->name = copyString(tokenString);
+				savedFunctionName = copyString(lastTokenString);
 			}
 					LPAREN params RPAREN compound_stmt
 			{
@@ -146,7 +150,7 @@ fun_declaration : type_specifier ID
  			    $$ = $1;
 				$$->nodekind = DeclK;
 				$$->kind.decl = FunK;
- 			    $$->name = savedName;
+ 			    $$->name = savedFunctionName;
 				$$->idtype = Function;
  				$$->child[0] = $5;
  				$$->child[1] = $7;
@@ -181,13 +185,13 @@ param : 	type_specifier ID
 				$$ = $1;
 				$$->nodekind = DeclK;
 				$$->kind.decl = ParamK;
-				$$->name = copyString(tokenString);
+				$$->name = copyString(lastTokenString);
 				$$->idtype = Simple;
 
 			}
 			| type_specifier ID
 			{
-				savedName = copyString(tokenString)
+				savedName = copyString(lastTokenString);
 			}
 				LBRCKT RBRCKT
 			{
@@ -313,13 +317,13 @@ expression : var ASSIGN expression
 				$$ = newNode();
 				$$->nodekind = ExpK;
 				$$->kind.exp = IdK;
-				$$->name = copyString(tokenString);
+				$$->name = copyString(lastTokenString);
 				$$->idtype = Simple;
          	}
 			| ID
 			{
 				savedLineNo = lineno;
-				savedName = copyString(tokenString);
+				savedName = copyString(lastTokenString);
 			}
 					LBRCKT expression RBRCKT
 			{
@@ -450,7 +454,7 @@ factor : 	LPAREN expression RPAREN { $$ = $2; }
 
 call : 		ID
  			{
-				savedName = copyString(tokenString);
+				savedName = copyString(lastTokenString);
 				savedLineNo = lineno;
 			}
 					LPAREN args RPAREN
@@ -492,7 +496,7 @@ Função responsável em emitir as mensagens de erro de sintaxe no listing.
 int yyerror(char * message) {
 	printf(ANSI_COLOR_RED "Syntax Error" ANSI_COLOR_RESET " at line %d: %s\n", lineno, message);
 	printf("Current token: ");
-	printToken(yychar, tokenString);
+	printToken(yychar, lastTokenString);
 	Error = TRUE;
 	return 0;
 }

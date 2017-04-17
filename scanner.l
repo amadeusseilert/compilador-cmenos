@@ -11,12 +11,14 @@
 #include "scanner.h"
 /* Lexema de um token */
 char tokenString[MAXTOKENLEN + 1];
+char lastTokenString[MAXTOKENLEN + 1];
 %}
 
 digit       [0-9]
 number      {digit}+
 letter      [a-zA-Z]
 word  		{letter}+
+identifier	{word}({word}|{number})*
 newline     \n
 whitespace  [ \t]+
 
@@ -52,7 +54,7 @@ whitespace  [ \t]+
 ","             			{return COMA;}
 
 {number}        			{return NUM;}
-{word}({word}|{number})*    {return ID;}
+{identifier}			    {return ID;}
 {newline}       			{lineno++;}
 {whitespace}    			{/* não toma nenhuma ação */}
 
@@ -98,7 +100,14 @@ TokenType getToken(void){
     	yyout = listing;
   	}
   	currentToken = yylex();
-  	strncpy(tokenString, yytext, MAXTOKENLEN);
+
+	if (firstTime) {
+		strncpy(tokenString, yytext, MAXTOKENLEN);
+		strncpy(lastTokenString, tokenString, MAXTOKENLEN);
+	} else {
+		strncpy(lastTokenString, tokenString, MAXTOKENLEN);
+		strncpy(tokenString, yytext, MAXTOKENLEN);
+	}
   	if (TraceScan) {
     	fprintf(listing,"\t%d: ", lineno);
     	printToken(currentToken, tokenString);
