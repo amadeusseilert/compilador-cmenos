@@ -8,6 +8,8 @@
 #ifndef _ANALYZE_H_
 #define _ANALYZE_H_
 
+extern int hasMain;
+
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
 definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode *);

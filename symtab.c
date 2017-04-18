@@ -9,10 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symtab.h"
+#include "util.h"
 
 /* Função hashing. Responsável por gerar um índice a partir de um nome de
 variável 'key' */
-static int hash (char * key ) {
+static int hash (char * key) {
 	int temp = 0;
 	int i = 0;
 	while (key[i] != '\0') {
@@ -25,51 +26,55 @@ static int hash (char * key ) {
 /* Tabela de símbolos */
 static BucketList hashTable[SIZE];
 
-/* Procedimento de inserção um símbolo na tabela. Adiciona também a referência
-do número da linha e na posição na memória. loc é ignorado após a primeira
-inserção do mesmo símbolo */
-void st_insert(char * name, int lineno, int loc ) {
+BucketList st_lookup (char * name, * scope) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
-	/* Mesmo estando no mesmo índice do bucket, pode ser que o primeiro símbolo
-	seja uma variável diferente. Portanto, deve ser inserido na referência do
-	próximo bucket */
-	while ((l != NULL) && (strcmp(name,l->name) != 0))
+	int found = FALSE;
+
+	while (l != NULL && found == FALSE){
+		if (strcmp(name, l->name) == 0 && strcmp(scope, l->scope) == 0)
+			found = TRUE;
 		l = l->next;
-	if (l == NULL) {/* Variável ainda não presente na tabela */
-		l = (BucketList) malloc(sizeof(struct BucketListRec));
-		l->name = name;
-		l->lines = (LineList) malloc(sizeof(struct LineListRec));
-		l->lines->lineno = lineno;
-		l->memloc = loc;
-		l->lines->next = NULL;
-		l->next = hashTable[h];
-		hashTable[h] = l;
 	}
-	else {/* Variável já presente, adiciona uma ocorrência nas linhas */
-	 	LineList t = l->lines;
-		while (t->next != NULL)
-			t = t->next;
-		t->next = (LineList) malloc(sizeof(struct LineListRec));
-		t->next->lineno = lineno;
-		t->next->next = NULL;
-	}
+
+	if (found == TRUE)
+		return l;
+	else
+		return NULL;
 }
 
-/* Função que retorna a posição na memória de uma variável. Retorna -1 se não
-encontrada. */
-int st_lookup (char * name ) {
+void st_insert (BucketList newBucket) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
-	while ((l != NULL) && (strcmp(name,l->name) != 0))
+
+	while (l != NULL) {
 		l = l->next;
-	if (l == NULL) return -1;
-	else return l->memloc;
+	}
+	
+	l->next = newBucket;
+}
+
+BucketList st_allocate (char * name, char * scope, char * type, int lineno) {
+    struct BucketListRec * temp;
+
+    temp = (struct BucketListRec *) malloc(sizeof(BucketList));
+    if (temp == NULL){
+		Error = TRUE;
+		fprintf(listing,
+			"*** Out of memory allocating memory for symbol table\n");
+    } else {
+		temp->name = copyString(name);
+		temp->scope = copyString(scope);
+		temp->type = copyString(type);
+		temp->lineFirstReferenced = lineno;
+		temp->next = NULL;
+    }
+    return temp;
 }
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
-void printSymTab(FILE * listing) {
+void st_print (FILE * listing) {
 	int i;
 	fprintf(listing,"Variable Name  Location   Line Numbers\n");
 	fprintf(listing,"-------------  --------   ------------\n");

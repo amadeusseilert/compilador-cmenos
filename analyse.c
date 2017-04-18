@@ -7,10 +7,26 @@
 #include "globals.h"
 #include "symtab.h"
 #include "analyze.h"
+#include "util.c"
 
 /* Contador de localização de memória obsoluta */
 static int location = 0;
 
+int hasMain = FALSE;
+
+static char * currentScope;
+static const char globalScopeName = "_global";
+static const char localScopeName = "_local";
+
+void setScope (char * name) {
+
+	if (name == NULL) {
+		currentScope = copyString(globalScopeName);
+	} else {
+		currentScope = copyString(localScopeName);
+		strcat(currentScope, name);
+	}
+}
 
 /* Procedimento que permite percorrer a árvore de sintaxe apontado por t. Aplica
 o protótipo de Procedimento preProc para execução em pré-ordem, postProc para
@@ -23,7 +39,7 @@ static void traverse( TreeNode * t,
 			{
 				int i;
 				for (i = 0; i < MAXCHILDREN; i++)
-				traverse(t->child[i], preProc, postProc);
+					traverse(t->child[i], preProc, postProc);
 			}
 			postProc(t);
 			traverse(t->sibling,preProc,postProc);
@@ -37,51 +53,59 @@ static void nullProc(TreeNode * t) {
 	else return;
 }
 
-/* Procedure insertNode inserts
-* identifiers stored in t into
-* the symbol table
-*/
 static void insertNode( TreeNode * t){
+
+	BucketList temp;
 	switch (t->nodekind){
-		case StmtK:
-			switch (t->kind.stmt){
-				case AssignK:
-				case ReadK:
-					if (st_lookup(t->attr.name) == -1)
-						/* not yet in table, so treat as new definition */
-						st_insert(t->attr.name,t->lineno,location++);
-					else
-						/* already in table, so ignore location,
-						add line number of use only */
-						st_insert(t->attr.name,t->lineno,0);
-					break;
-				default:
-					break;
+		case DeclK:
+			temp = st_lookup(t->name, currentScope);
+			if (temp != NULL){
+				printSemanticError(t, "duplicate identifier declared");
+			} else {
+				temp = st_allocate(t->name, currentScope, typeName(t->type), t->lineno);
+				st_insert(temp);
+				if (t->idtype == Function){
+					setScope(t->name);
+				}
 			}
 			break;
 		case ExpK:
-			switch (t->kind.exp){
-				case IdK:
-					if (st_lookup(t->attr.name) == -1)
-						/* not yet in table, so treat as new definition */
-						st_insert(t->attr.name,t->lineno,location++);
-					else
-						/* already in table, so ignore location,
-						add line number of use only */
-						st_insert(t->attr.name,t->lineno,0);
-					break;
-				default:
-					break;
-			}
-			break;
+
 		default:
 			break;
 	}
 }
 
+void declarePredefines( ) {
+
+	BucketList input;
+	BucketList output;
+
+    /* define "int input(void)" */
+    input->name = copyString("input");
+    input->type = Integer;
+    input->scope = copyString("global");
+
+    /* define "void output(int)" */
+    temp = newNode();
+    temp->name = copyString("arg");
+    temp->type = Integer;
+    temp->idtype = Simple;
+
+    output = newNode();
+    output->name = copyString("output");
+    output->type = Void;
+    output->idtype = Function;
+    output->child[0] = temp;
+
+    insertSymbol("input", input, 0);
+    insertSymbol("output", output, 0);
+}
+
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
 definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode * syntaxTree) {
+	currentScope = copyString("global");
 	traverse(syntaxTree,insertNode,nullProc);
 	if (TraceAnalyze){
 		fprintf(listing, "\nSymbol table:\n\n");
@@ -95,10 +119,17 @@ static void printSemanticError(TreeNode * t, char * message) {
 	Error = TRUE;
 }
 
+static int checkArguments(TreeNode * callNode){
+
+	return TRUE;
+}
+
 /* Procedimento que executa a verificação de tipo de um nó da árvore */
 static void checkNode(TreeNode * t) {
 	switch (t->nodekind){
 		case ExpK:
+			/* Nós do tipo expressão precisam realizar a verificação dos tipos
+			de seus nós filhos e em seguida atribuir o tipo ao nó raiz */
 			switch (t->kind.exp){
 				/* verifica se um nó do tipo operação possui ambos os filhos
 				nós de tipo inteiro */
@@ -118,15 +149,30 @@ static void checkNode(TreeNode * t) {
 						t->type = Integer;
 					break;
 				case ConstK:
-				case IdK:
 					t->type = Integer;
 					break;
-				default:
+				case IdK:
+					if (t->idtype == Simple) {
+						t->type = Integer;
+					} else if (t->idtype == Array){
+						if (t->child[0]->type != Integer)
+							printSemanticError(t, "array must be indexed by an integer value");
+						else
+							t->type = Integer;
+					} else {
+						printSemanticError(t, "illegal identifier type");
+					}
 					break;
 			}
 		break;
 		case StmtK:
+			/* Nós do tipo statement não precisam ter valor de tipo (exceto
+			call), apenas seus filhos, como é o caso, por exemplo, do nó if, que
+			deve possuir uma expressão do tipo booleana como filho */
 			switch (t->kind.stmt) {
+				case CmpdK:
+					/* Não verifica nada */
+					break;
 				case IfK:
 					/* A expressão dentro do teste do if deve ser do tipo
 					booleano */
@@ -136,8 +182,11 @@ static void checkNode(TreeNode * t) {
 				case AssignK:
 					/* Como só é possível a declaração de variáveis do tipo
 					inteiro, a atribuição deve ser dada a uma variável inteira */
-					if (t->child[0]->type != Integer)
+					if (t->child[0]->type != Integer &&
+						t->child[1]->type != Integer)
 						printSemanticError(t->child[0], "assignment of non-integer value");
+					else
+						t->type = Integer;
 					break;
 				case WhileK:
 					/* A expressão dentro do teste do laço deve ser do tipo
@@ -145,13 +194,13 @@ static void checkNode(TreeNode * t) {
 					if (t->child[0]->type != Boolean)
 						printSemanticError(t->child[0], "while test is not Boolean");
 					break;
+				case CallK:
+
 				case ReturnK:
 					/* Se */
 					if (t->child[0] != NULL && t->child[0]->type != Integer)
 						printSemanticError(t->child[1],"function returns non-integer value");
-				break;
-				default:
-				break;
+					break;
 			}
 			break;
 		case DeclK:
@@ -165,7 +214,7 @@ static void checkNode(TreeNode * t) {
 						printSemanticError(t->child[0], "parameter type is not integer");
 					break;
 				case FunK:
-					if (t->type != Integer || t->type != Void)
+					if (t->type != Integer && t->type != Void)
 						printSemanticError(t->child[0], "function type must be either integer or void");
 					break;
 			}
@@ -175,7 +224,7 @@ static void checkNode(TreeNode * t) {
 	}
 }
 
-/* Procedimento em pré-ordem para verificar os tipos dos nós da árvore */
+/* Procedimento em pós-ordem para verificar os tipos dos nós da árvore */
 void typeCheck(TreeNode * syntaxTree) {
 	traverse(syntaxTree, nullProc, checkNode);
 }

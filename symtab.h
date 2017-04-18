@@ -14,21 +14,15 @@
 /* Potência de dois para o deslocamento como multiplicador na função de hash */
 #define SHIFT 4
 
-/* Cada símbolo único na tabela possui uma lista encadeada que indica as
-linhas as quais se encontram as ocorrências no arquivo de entrada 'source' */
-typedef struct LineListRec {
-	int lineno;
-	struct LineListRec * next;
-} * LineList;
-
 /* O registro na lista de buckets para cada variável, o qual mantém informações
 como o nome, as linhas e localização na memória. É importante notar que um
 bucket possui referência encadeada também, para tratar colisões na função
 hash */
 typedef struct BucketListRec {
-	char * name;
-	LineList lines;
-	int memloc ; /* memory location for variable */
+	char * name; //id
+	char * type; //tipo
+	char * scope; //escopo
+	int lineFirstReferenced;// número da linha onde ocorre a primeira incidencia
 	struct BucketListRec * next;
 } * BucketList;
 

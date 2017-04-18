@@ -13,6 +13,9 @@ Procedimento que imprime um token e seu lexema no arquivo listitng
 */
 void printToken(TokenType, const char* );
 
+/* Função que retorna a string do nome de um tipo */
+char * typeName(Type type);
+
 /*
 Esta função cria um nó da árvore de sintaxe.
 */

@@ -119,7 +119,6 @@ var_declaration : type_specifier ID
 				$$->nodekind = DeclK;
 				$$->kind.decl = VarK;
 				$$->name = savedName;
-				$$->idtype = Simple;
 				$$->val = savedValue;
 				$$->idtype = Array;
 			}
@@ -158,7 +157,7 @@ fun_declaration : type_specifier ID
  			;
 
 params : 	param_list { $$ = $1; }
-	  		| VOID
+	  		| VOID {$$ = NULL; }
 	  		;
 
 param_list : param_list COMA param

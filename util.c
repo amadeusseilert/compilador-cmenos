@@ -57,6 +57,29 @@ void printToken(TokenType token, const char* tokenString ) {
     }
 }
 
+/* Função que retorna a string do nome de um tipo */
+char * typeName(Type type){
+    static char i[] = "integer";
+    static char v[] = "void";
+	static char b[] = "boolean";
+    static char invalid[] = "<<invalid type>>";
+
+    switch (type) {
+    	case Integer:
+		 	return i;
+			break;
+    	case Void:
+			return v;
+			break;
+		case Boolean:
+			return b;
+			break;
+    	default:
+			return invalid;
+			break;
+    }
+}
+
 /*
 Esta função cria um nó da árvore de sintaxe.
 */
@@ -101,51 +124,6 @@ static void printSpaces(void) {
     int i;
     for (i = 0; i < indentno; i++)
         fprintf(listing, " ");
-}
-
-/* Procedimento para imprimir um nó do tipo var */
-void printVarId(TreeNode * tree) {
-	switch (tree->type) {
-		case Integer:
-			fprintf(listing, "Var: %s INTEGER ",tree->name);
-			if (tree->idtype == Array)
-				fprintf(listing, "[%d]",tree->val);
-			fprintf(listing, "\n");
-			break;
-		default:
-			fprintf(listing, "Unknown Var kind\n");
-			break;
-	}
-}
-
-/* Procedimento para imprimir um nó do tipo param */
-void printParamId(TreeNode * tree) {
-	switch (tree->type) {
-		case Integer:
-			fprintf(listing, "Param: %s INTEGER ",tree->name);
-			if (tree->idtype == Array)
-				fprintf(listing, "[%d]",tree->val);
-			fprintf(listing, "\n");
-			break;
-		default:
-			fprintf(listing, "Unknown Var kind\n");
-			break;
-	}
-}
-
-/* Procedimento para imprimir um nó do tipo function */
-void printFunctionId(TreeNode * tree) {
-	switch (tree->type) {
-		case Integer:
-			fprintf(listing, "Function: %s INTEGER\n",tree->name);
-			break;
-		case Void:
-			fprintf(listing, "Function: %s VOID\n",tree->name);
-			break;
-		default:
-			fprintf(listing, "Unknown Function kind\n");
-			break;
-	}
 }
 
 /* procedure printTree prints a syntax tree to the
@@ -199,13 +177,13 @@ void printTree(TreeNode * tree){
     	} else if (tree->nodekind == DeclK) {
 			switch (tree->kind.decl) {
 				case VarK:
-					printVarId(tree);
+					fprintf(listing, "Variable: %s %s", t->name, typeName(t->type));
 					break;
 				case FunK:
-					printFunctionId(tree);
+					fprintf(listing, "Function: %s %s", t->name, typeName(t->type));
 					break;
 				case ParamK:
-					printParamId(tree);
+					fprintf(listing, "Parameter: %s %s", t->name, typeName(t->type));
 					break;
 				default:
 					fprintf(listing, "Unknown DeclNode kind\n");
