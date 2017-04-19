@@ -73,22 +73,23 @@ typedef enum {Simple, Array, Function} IdType;
 
 /* Estrutura de um nó da árvore */
 typedef struct treeNode {
-	struct treeNode * child[MAXCHILDREN];
-    struct treeNode * sibling;
-    int lineno;
-    NodeKind nodekind;
+	struct treeNode * child[MAXCHILDREN]; // nós filhos
+    struct treeNode * sibling; // regras em fechamento
+	struct treeNode * enclosingFunction; // última declaração de função
+    int lineno; // referência do número da linha
+    NodeKind nodekind; // tipo do nó
 
     union {
 		StmtKind stmt;
 		ExpKind exp;
 		DeclKind decl;
-	} kind;
+	} kind; // tipo do tipo do nó
 
-	TokenType op;
-	int val;
-    char * name;
-    Type type;
-	IdType idtype;
+	TokenType op; // caso o nó for do tipo OpK, armazena a operação
+	int val; // caso o nó for um vetor ou constante, armazena o valor
+    char * name; // caso o nó for um identificador, armazena o nome
+    Type type; // armazena a classificação de valor do nó
+	IdType idtype; // caso o nó for um identificador
 } TreeNode;
 
 /**************************************************/
@@ -126,7 +127,7 @@ extern int TraceParse;
 TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo
 listing
 */
-//extern int TraceAnalyze;
+extern int TraceAnalyze;
 
 /*
 TraceCode = TRUE faz com que comentários sejam gerados no arquivo code conforme

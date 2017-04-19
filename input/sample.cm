@@ -6,3 +6,5 @@ int main(int k) {
 	n = 10;
 	return (a[0] + k) * ((a[1] + k) + n);
 }
+
+int global;

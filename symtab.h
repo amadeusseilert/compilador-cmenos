@@ -19,24 +19,23 @@ como o nome, as linhas e localização na memória. É importante notar que um
 bucket possui referência encadeada também, para tratar colisões na função
 hash */
 typedef struct BucketListRec {
-	char * name; //id
-	char * type; //tipo
-	char * scope; //escopo
-	int lineFirstReferenced;// número da linha onde ocorre a primeira incidencia
+	TreeNode * node;
 	struct BucketListRec * next;
 } * BucketList;
 
- /* Procedimento de inserção um símbolo na tabela. Adiciona também a referência
- do número da linha e na posição na memória. loc é ignorado após a primeira
- inserção do mesmo símbolo */
-void st_insert(char * name, int lineno, int loc );
+BucketList st_lookup (char * name, TreeNode * scope);
 
- /* Função que retorna a posição na memória de uma variável. Retorna -1 se não
- encontrada. */
-int st_lookup(char * name );
+void st_insert (BucketList newBucket);
+
+BucketList st_allocate (TreeNode * node);
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
-void printSymTab(FILE * listing);
+void st_print ();
+
+void st_free_bucket (BucketList l);
+
+void st_free ();
+
 
 #endif

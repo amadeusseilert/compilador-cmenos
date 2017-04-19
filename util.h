@@ -13,6 +13,8 @@ Procedimento que imprime um token e seu lexema no arquivo listitng
 */
 void printToken(TokenType, const char* );
 
+char * scopeName(TreeNode * node);
+
 /* Função que retorna a string do nome de um tipo */
 char * typeName(Type type);
 
@@ -39,5 +41,9 @@ void printFunctionId(TreeNode * tree);
  * listing file using indentation to indicate subtrees
  */
 void printTree(TreeNode * );
+
+void freeNode(TreeNode *);
+
+void freeTree(TreeNode *);
 
 #endif

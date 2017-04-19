@@ -57,6 +57,20 @@ void printToken(TokenType token, const char* tokenString ) {
     }
 }
 
+char * scopeName(TreeNode * node){
+	static char g[] = "_global_";
+	char * scopeName;
+
+	if (node == NULL)
+		return g;
+	else {
+		scopeName = copyString("_");
+		strcat(scopeName, node->name);
+		strcat(scopeName, "_");
+		return scopeName;
+	}
+}
+
 /* Função que retorna a string do nome de um tipo */
 char * typeName(Type type){
     static char i[] = "integer";
@@ -92,6 +106,7 @@ TreeNode * newNode() {
 
         for (i = 0; i < MAXCHILDREN; i++) t->child[i] = NULL;
         t->sibling = NULL;
+		t->enclosingFunction = NULL;
         t->lineno = lineno;
     }
     return t;
@@ -168,7 +183,7 @@ void printTree(TreeNode * tree){
 	          		fprintf(listing, "Const: %d\n",tree->val);
 	          		break;
 	        	case IdK:
-	          		fprintf(listing, "Id: %s\n",tree->name);
+	          		fprintf(listing, "Id: %s Scope: %s\n",tree->name, scopeName(tree->enclosingFunction));
 	          		break;
 	        	default:
 	          		fprintf(listing, "Unknown ExpNode kind\n");
@@ -177,13 +192,13 @@ void printTree(TreeNode * tree){
     	} else if (tree->nodekind == DeclK) {
 			switch (tree->kind.decl) {
 				case VarK:
-					fprintf(listing, "Variable: %s %s", t->name, typeName(t->type));
+					fprintf(listing, "Variable: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
 					break;
 				case FunK:
-					fprintf(listing, "Function: %s %s", t->name, typeName(t->type));
+					fprintf(listing, "Function: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
 					break;
 				case ParamK:
-					fprintf(listing, "Parameter: %s %s", t->name, typeName(t->type));
+					fprintf(listing, "Parameter: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
 					break;
 				default:
 					fprintf(listing, "Unknown DeclNode kind\n");
@@ -196,4 +211,30 @@ void printTree(TreeNode * tree){
     	tree = tree->sibling;
   	}
   	UNINDENT;
+}
+
+/* CORRIGIR */
+void freeNode(TreeNode * node) {
+	free(node->name);
+	free(node);
+}
+
+/*
+Program received signal SIGSEGV, Segmentation fault.
+freeTree (tree=0x3d3340) at util.c:226
+226                     for (i = 0; i < MAXCHILDREN; i++)
+
+CORRIGIR
+*/
+void freeTree(TreeNode * tree) {
+
+	int i;
+
+	if (tree == NULL)
+		return;
+
+	for (i = 0; i < MAXCHILDREN; i++)
+		freeTree(tree->child[i]);
+	freeTree(tree->sibling);
+	freeNode(tree);
 }

@@ -25,10 +25,11 @@ static char * savedFunctionName; /* Usado em Mid-Rule para expressões */
 static int savedValue; /* Usado em Mid-Rule */
 static int savedLineNo;  /* Usado em Mid-Rule */
 
-/*
-Armazena a árvore de sintaxe para uso posterior.
-*/
+/* Armazena a árvore de sintaxe para uso posterior. */
 static YYSTYPE savedTree = NULL;
+/* Armazena um nó que corresponde a declaração de uma função. Será usado
+posteriormente na análise semântica em valores de escopo */
+static YYSTYPE enclosingFunction = NULL;
 
 
 /*
@@ -97,6 +98,10 @@ var_declaration : type_specifier ID
 				$$->nodekind = DeclK;
 				$$->kind.decl = VarK;
 				$$->name = savedName;
+				/* O escopo de uma variável pode ser global (enclosingFunction
+				= NULL) ou local (última declaração de função armazenada em
+				enclosingFunction) */
+				$$->enclosingFunction = enclosingFunction;
 				$$->idtype = Simple;
 			}
 			| type_specifier ID
@@ -119,6 +124,7 @@ var_declaration : type_specifier ID
 				$$->nodekind = DeclK;
 				$$->kind.decl = VarK;
 				$$->name = savedName;
+				$$->enclosingFunction = enclosingFunction;
 				$$->val = savedValue;
 				$$->idtype = Array;
 			}
@@ -140,6 +146,7 @@ fun_declaration : type_specifier ID
 
 			{
 				savedFunctionName = copyString(lastTokenString);
+				enclosingFunction = $1; /* "Abre" um escopo */
 			}
 					LPAREN params RPAREN compound_stmt
 			{
@@ -153,6 +160,9 @@ fun_declaration : type_specifier ID
 				$$->idtype = Function;
  				$$->child[0] = $5;
  				$$->child[1] = $7;
+				/* Como todos os nós dentro da regra coupound_stmt já foram
+				processados, podemos "Fechar" o escopo aqui. */
+				enclosingFunction = NULL;
  			}
  			;
 
@@ -183,6 +193,8 @@ param : 	type_specifier ID
 			{
 				$$ = $1;
 				$$->nodekind = DeclK;
+				/* A declaração de um parâmetro associa ao escopo corrente */
+				$$->enclosingFunction = enclosingFunction;
 				$$->kind.decl = ParamK;
 				$$->name = copyString(lastTokenString);
 				$$->idtype = Simple;
@@ -289,6 +301,7 @@ return_decl : RETURN SEMI
 			{
 				$$ = newNode();
 				$$->nodekind = StmtK;
+				$$->enclosingFunction = enclosingFunction;
 				$$->kind.stmt = ReturnK;
 			}
 			| RETURN expression SEMI
@@ -296,6 +309,7 @@ return_decl : RETURN SEMI
 				$$ = newNode();
 				$$->nodekind = StmtK;
 				$$->kind.stmt = ReturnK;
+				$$->enclosingFunction = enclosingFunction;
 				$$->child[0] = $2;
 			}
 			;
@@ -317,6 +331,7 @@ expression : var ASSIGN expression
 				$$->nodekind = ExpK;
 				$$->kind.exp = IdK;
 				$$->name = copyString(lastTokenString);
+				$$->enclosingFunction = enclosingFunction;
 				$$->idtype = Simple;
          	}
 			| ID
@@ -331,6 +346,7 @@ expression : var ASSIGN expression
 				$$->kind.exp = IdK;
 				$$->name = savedName;
 				$$->lineno = savedLineNo;
+				$$->enclosingFunction = enclosingFunction;
 				$$->idtype = Array;
 				$$->child[0] = $4;
 			}

@@ -5,11 +5,10 @@
 /* compilador C-.									*/
 /****************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "globals.h"
 #include "symtab.h"
 #include "util.h"
+
 
 /* Função hashing. Responsável por gerar um índice a partir de um nome de
 variável 'key' */
@@ -26,14 +25,19 @@ static int hash (char * key) {
 /* Tabela de símbolos */
 static BucketList hashTable[SIZE];
 
-BucketList st_lookup (char * name, * scope) {
+BucketList st_lookup (char * name, TreeNode * scope) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
 	int found = FALSE;
 
 	while (l != NULL && found == FALSE){
-		if (strcmp(name, l->name) == 0 && strcmp(scope, l->scope) == 0)
-			found = TRUE;
+		if (strcmp(name, l->node->name) == 0){
+			if (scope != NULL && l->node->enclosingFunction != NULL) {
+				if (strcmp(scope->name, l->node->enclosingFunction->name) == 0)
+					found = TRUE;
+			} else if (scope == NULL && l->node->enclosingFunction == NULL)
+				found = TRUE;
+		}
 		l = l->next;
 	}
 
@@ -44,17 +48,17 @@ BucketList st_lookup (char * name, * scope) {
 }
 
 void st_insert (BucketList newBucket) {
-	int h = hash(name);
+	int h = hash(newBucket->node->name);
 	BucketList l =  hashTable[h];
 
 	while (l != NULL) {
 		l = l->next;
 	}
-	
-	l->next = newBucket;
+
+	l = newBucket;
 }
 
-BucketList st_allocate (char * name, char * scope, char * type, int lineno) {
+BucketList st_allocate (TreeNode * node) {
     struct BucketListRec * temp;
 
     temp = (struct BucketListRec *) malloc(sizeof(BucketList));
@@ -63,10 +67,7 @@ BucketList st_allocate (char * name, char * scope, char * type, int lineno) {
 		fprintf(listing,
 			"*** Out of memory allocating memory for symbol table\n");
     } else {
-		temp->name = copyString(name);
-		temp->scope = copyString(scope);
-		temp->type = copyString(type);
-		temp->lineFirstReferenced = lineno;
+		temp->node = node;
 		temp->next = NULL;
     }
     return temp;
@@ -74,24 +75,43 @@ BucketList st_allocate (char * name, char * scope, char * type, int lineno) {
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
-void st_print (FILE * listing) {
+void st_print () {
 	int i;
-	fprintf(listing,"Variable Name  Location   Line Numbers\n");
-	fprintf(listing,"-------------  --------   ------------\n");
+	fprintf(listing,"Variable Name\tType\tScope Name\tLine Number\n");
+	fprintf(listing,"----------\t------\t----------\t---\n");
 	for (i=0;i<SIZE;++i) {
 		if (hashTable[i] != NULL) {
 			BucketList l = hashTable[i];
 			while (l != NULL) {
-				LineList t = l->lines;
-				fprintf(listing,"%-14s ",l->name);
-				fprintf(listing,"%-8d  ",l->memloc);
-				while (t != NULL){
-					fprintf(listing,"%4d ",t->lineno);
-					t = t->next;
-				}
+				fprintf(listing,"%-14s ", l->node->name);
+				fprintf(listing,"%-7s ", typeName(l->node->type));
+				fprintf(listing,"%-14s ", scopeName(l->node->enclosingFunction));
+				fprintf(listing,"%d ", l->node->lineno);
 				fprintf(listing,"\n");
 				l = l->next;
 			}
+		}
+	}
+}
+
+/* CORRIGIR */
+void st_free_bucket (BucketList l) {
+	l->node = NULL;
+	free(l);
+}
+
+/* CORRIGIR - SIGSEGV, Segmentation fault.*/
+void st_free () {
+
+	int i;
+
+	for (i = 0; i < SIZE; i++){
+		if (hashTable[i] != NULL){
+			BucketList l = hashTable[i];
+			while (l->next != NULL){
+				l = l->next;
+			}
+			st_free_bucket(l);
 		}
 	}
 }

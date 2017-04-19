@@ -9,7 +9,7 @@
 /* set NO_PARSE to TRUE to get a scanner-only compiler */
 #define NO_PARSE FALSE
 /* set NO_ANALYZE to TRUE to get a parser-only compiler */
-//#define NO_ANALYZE FALSE
+#define NO_ANALYZE FALSE
 
 /* set NO_CODE to TRUE to get a compiler that does not
  * generate code
@@ -21,12 +21,13 @@
 #include "scanner.h"
 #else
 #include "parser.h"
-// #if !NO_ANALYZE
-// #include "analyze.h"
+#if !NO_ANALYZE
+#include "analyze.h"
+#include "symtab.h"
 // #if !NO_CODE
 // #include "cgen.h"
 // #endif
-// #endif
+#endif
 #endif
 
 /****************************************************/
@@ -41,6 +42,7 @@ FILE * code;
 
 int TraceScan = TRUE;
 int TraceParse = TRUE;
+int TraceAnalyze = TRUE;
 
 int Error = FALSE;
 
@@ -81,14 +83,23 @@ int main(int argc, char * argv[]) {
       	fprintf(listing, "\n"ANSI_COLOR_YELLOW "Syntax tree:"ANSI_COLOR_RESET"\n");
       	printTree(syntaxTree);
     }
-
+#if !NO_ANALYZE
+  	if (!Error){
+		if (TraceAnalyze) fprintf(listing,"\nBuilding Symbol Table...\n");
+    	buildSymtab(syntaxTree);
+    	if (TraceAnalyze) fprintf(listing,"\nChecking Types...\n");
+    	typeCheck(syntaxTree);
+    	if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
+  	}
 	// code = fopen("output.cmm", "w+"); /* Tenta abrir o arquivo de saída */
 	// if (code == NULL) {
 	// 	fprintf(stderr, "Error at openning file output.cmm\n");
 	// 	exit(1);
 	// }
 	// fclose(code);
-	free(syntaxTree);
+	//st_free();
+#endif
+	freeTree(syntaxTree);
 #endif
 	fclose(source);
 	return 0;

@@ -23,7 +23,7 @@ CLEAN-CMD = rm -f
 
 CFLAGS = -Wall -g
 
-OBJS = main.o util.o lex.yy.o parser.tab.o
+OBJS = main.o util.o analyze.o symtab.o lex.yy.o parser.tab.o
 
 all: parser.tab.c lex.yy.c c-compiler.exe clean
 
@@ -36,11 +36,17 @@ lex.yy.c: scanner.l scanner.h globals.h util.h
 c-compiler.exe: $(OBJS)
 	$(CC) $(CFLAGS) -o $(EXE) $(OBJS)
 
-main.o: main.c util.h globals.h parser.h scanner.h
+main.o: main.c util.h analyze.h symtab.h globals.h parser.h scanner.h
 	$(CC) $(CFLAGS) -c main.c
 
 util.o: util.c util.h globals.h
 	$(CC) $(CFLAGS) -c util.c
+
+symtab.o: symtab.c symtab.h util.h globals.h
+	$(CC) $(CFLAGS) -c symtab.c
+
+analyze.o: analyze.c analyze.h symtab.h util.h globals.h
+	$(CC) $(CFLAGS) -c analyze.c
 
 lex.yy.o: lex.yy.c globals.h util.h
 	$(CC) $(CFLAGS) -c lex.yy.c
@@ -50,6 +56,8 @@ parser.tab.o: parser.tab.c parser.tab.h globals.h util.h scanner.h
 
 clean:
 	$(CLEAN-CMD) util.o
+	$(CLEAN-CMD) analyze.o
+	$(CLEAN-CMD) symtab.o
 	$(CLEAN-CMD) lex.yy.o
 	$(CLEAN-CMD) parser.tab.o
 	$(CLEAN-CMD) parser.tab.c
