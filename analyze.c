@@ -13,6 +13,9 @@
 static int hasReturn = FALSE;
 /* Usado para saber se ocorreu a declaração da função main */
 static int hasMain = FALSE;
+/* Contador de valor de endereço virtual de memória, será usado posteriormente
+para a geração de código */
+static int location = 0x0;
 
 /* Procedimento "faz nada", possibilitando gerar execuções de pré-ordem apenas,
 ou pós-ordem. */
@@ -68,6 +71,8 @@ static int checkCallArguments (TreeNode * callNode, TreeNode * functionNode) {
 		return FALSE;
 }
 
+/* Procedimento que executa a inserção de símbolos na tabela e também realiza
+verificações de regularidade de declarações. */
 static void insertNode(TreeNode * t){
 	BucketList temp;
 	switch (t->nodekind){
@@ -79,7 +84,7 @@ static void insertNode(TreeNode * t){
 				printSemanticError(t, "duplicate identifier declared");
 			} else {
 				/* Nova declaração, insere na tabela de símbolos */
-				st_insert(t);
+				st_insert(t, location++);
 				/* Verifica se ocorreu a declaração da função main*/
 				if (t->kind.decl == FunK && hasMain == FALSE)
 					if (strcmp(t->name, "main") == 0)
@@ -274,13 +279,14 @@ void declarePredefines( ) {
 	inputNode->idtype = Function;
 	inputNode->type = Integer;
 
-    /* define "void output(int)" */
+    /* define o argumento do procedimento "output" */
     temp = newNode();
 	temp->lineno = 0;
     temp->name = copyString("arg");
     temp->type = Integer;
     temp->idtype = Simple;
 
+	/* define "void output(int)" */
     outputNode = newNode();
 	outputNode->lineno = 0;
     outputNode->name = copyString("output");
@@ -288,8 +294,8 @@ void declarePredefines( ) {
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
-	st_insert(inputNode);
-	st_insert(outputNode);
+	st_insert(inputNode, location++);
+	st_insert(outputNode, location++);
 }
 
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
@@ -302,7 +308,7 @@ void buildSymtab(TreeNode * syntaxTree) {
 		printSemanticError(syntaxTree, "no main function declared");
 	}
 	if (TraceAnalyze){
-		fprintf(listing, "\nSymbol table:\n\n");
+		fprintf(listing, ANSI_COLOR_YELLOW "\nSymbol table:\n\n" ANSI_COLOR_RESET);
 		st_print();
 	}
 }

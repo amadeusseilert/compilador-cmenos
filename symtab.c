@@ -25,17 +25,26 @@ static int hash (char * key) {
 /* Tabela de símbolos */
 static BucketList hashTable[SIZE];
 
+/* Executa uma busca na tabela por um nome e nome de escopo em comum. Se for
+encontrado, o símbolo é retornado, caso contrário, retorna NULL. Caso scope
+seja NULL, considera-se que o escopo de busca é apenas global */
 BucketList st_lookup (char * name, TreeNode * scope) {
 	int h = hash(name);
 	BucketList l =  hashTable[h];
-	int found = FALSE;
 
-	while (l != NULL && found == FALSE){
+	while (l != NULL){
+		/* Tenta encontrar um símbolo com o mesmo nome */
 		if (strcmp(name, l->node->name) == 0){
+			/* Verifica se o símbolo encontrado possui escopo local, e se
+			o escopo passado também é local */
 			if (scope != NULL && l->node->enclosingFunction != NULL) {
+				/* Tenta verificar se os nomes dos escopos são iguais */
 				if (strcmp(scope->name, l->node->enclosingFunction->name) == 0)
 					return l;
-			} else if (scope == NULL && l->node->enclosingFunction == NULL)
+			}
+			/* Se ambos os escopos são nulos, e os nomes são iguais, significa
+			que existe um símbolo em escopo global encontrado */
+			else if (scope == NULL && l->node->enclosingFunction == NULL)
 				return l;
 		}
 		l = l->next;
@@ -44,7 +53,9 @@ BucketList st_lookup (char * name, TreeNode * scope) {
 	return NULL;
 }
 
-void st_insert (TreeNode * node) {
+/* Insere um símbolo na tabela, caso a função hash retorne um bucket já ocupado,
+utiliza-se a lista encadeada na posição percorrendo até uma referência livre */
+void st_insert (TreeNode * node, int loc) {
 	int h = hash(node->name);
 	BucketList l =  hashTable[h];
 
@@ -54,6 +65,7 @@ void st_insert (TreeNode * node) {
 
 	l = (BucketList) malloc(sizeof(struct BucketListRec));
 	l->node = node;
+	l->location = loc;
 	l->next = hashTable[h];
 	hashTable[h] = l;
 }
@@ -62,16 +74,17 @@ void st_insert (TreeNode * node) {
 'listing' */
 void st_print () {
 	int i;
-	fprintf(listing,"Variable Name\tType\tScope Name\tLine #\n");
-	fprintf(listing,"-------------\t----\t----------\t------\n");
+	fprintf(listing,"Variable Name\tType\tScope Name\tLine #\tLocation\n");
+	fprintf(listing,"-------------\t----\t----------\t------\t--------\n");
 	for (i=0;i<SIZE;++i) {
 		if (hashTable[i] != NULL) {
 			BucketList l = hashTable[i];
 			while (l != NULL) {
 				fprintf(listing,"%-15s", l->node->name);
 				fprintf(listing,"%-10s", typeName(l->node->type));
-				fprintf(listing,"%-14s", scopeName(l->node->enclosingFunction));
-				fprintf(listing,"%d", l->node->lineno);
+				fprintf(listing,"%-15s", scopeName(l->node->enclosingFunction));
+				fprintf(listing,"%d\t", l->node->lineno);
+				fprintf(listing,"%#06x", l->location);
 				fprintf(listing,"\n");
 				l = l->next;
 			}
@@ -79,13 +92,13 @@ void st_print () {
 	}
 }
 
-/* CORRIGIR */
+/* Libera a memória de um bucket da tabela */
 void st_free_bucket (BucketList l) {
 	l->node = NULL;
 	free(l);
 }
 
-/* CORRIGIR - SIGSEGV, Segmentation fault.*/
+/* Libera a memória da tabela de símbolos por completo */
 void st_free () {
 
 	int i;
