@@ -69,8 +69,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	listing = stdout; /* Envia o arquivo de depuração para o stdout */
-	fprintf(listing, "\n" ANSI_COLOR_YELLOW "C MINUS COMPILATION" ANSI_COLOR_RESET "\n");
-	fprintf(listing, "\nIdentified Tokens:\n");
+	fprintf(listing, "\n" ANSI_COLOR_YELLOW "C MINUS COMPILATION" ANSI_COLOR_RESET ": %s\n", inputName);
+	fprintf(listing, "\n"ANSI_COLOR_YELLOW "Identified Tokens: "ANSI_COLOR_RESET "\n");
 #if NO_PARSE
 	while (getToken() != EOF);
 #else
@@ -87,9 +87,11 @@ int main(int argc, char * argv[]) {
   	if (!Error){
 		if (TraceAnalyze) fprintf(listing,"\nBuilding Symbol Table...\n");
     	buildSymtab(syntaxTree);
-    	if (TraceAnalyze) fprintf(listing,"\nChecking Types...\n");
-    	typeCheck(syntaxTree);
-    	if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
+		if (!Error) {
+			if (TraceAnalyze) fprintf(listing,"\nChecking Types...\n");
+	    	typeCheck(syntaxTree);
+	    	if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
+		}
   	}
 	// code = fopen("output.cmm", "w+"); /* Tenta abrir o arquivo de saída */
 	// if (code == NULL) {
@@ -97,10 +99,16 @@ int main(int argc, char * argv[]) {
 	// 	exit(1);
 	// }
 	// fclose(code);
-	//st_free();
+	st_free();
 #endif
 	freeTree(syntaxTree);
 #endif
 	fclose(source);
+
+	if (!Error) {
+		fprintf(listing, ANSI_COLOR_GREEN "\nCompilation Successful!\n" ANSI_COLOR_RESET);
+	} else {
+		fprintf(listing, ANSI_COLOR_RED "\nCompilation Unsuccessful!\n" ANSI_COLOR_RESET);
+	}
 	return 0;
 }

@@ -1,0 +1,9 @@
+/* Exemplo de entrada com erros de semântica - Invocação */
+
+int main(void) {
+
+	int a;
+	/* Função desconhecida */
+	a = function(a);
+	return a;
+}

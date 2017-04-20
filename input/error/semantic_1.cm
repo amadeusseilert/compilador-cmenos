@@ -1,0 +1,8 @@
+/* Exemplo de entrada com erros de semântica - Declaração */
+
+int main(void) {
+
+	/* Utilização de variável não declarada */
+	k = 10 - 20;
+	return k;
+}

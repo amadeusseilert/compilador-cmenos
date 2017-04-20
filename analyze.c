@@ -9,8 +9,9 @@
 #include "analyze.h"
 #include "util.h"
 
+/* Usado para saber se uma função precisa de return*/
 static int hasReturn = FALSE;
-
+/* Usado para saber se ocorreu a declaração da função main */
 static int hasMain = FALSE;
 
 /* Procedimento "faz nada", possibilitando gerar execuções de pré-ordem apenas,
@@ -22,7 +23,7 @@ static void nullProc(TreeNode * t) {
 
 /* Procedimento que aponta um erro semântico de tipo. */
 static void printSemanticError(TreeNode * t, char * message) {
-	fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
+	fprintf(listing, ANSI_COLOR_RED "Semantic Error" ANSI_COLOR_RESET" at line %d: %s\n", t->lineno, message);
 	Error = TRUE;
 }
 
@@ -78,8 +79,7 @@ static void insertNode(TreeNode * t){
 				printSemanticError(t, "duplicate identifier declared");
 			} else {
 				/* Nova declaração, insere na tabela de símbolos */
-				temp = st_allocate(t);
-				st_insert(temp);
+				st_insert(t);
 				/* Verifica se ocorreu a declaração da função main*/
 				if (t->kind.decl == FunK && hasMain == FALSE)
 					if (strcmp(t->name, "main") == 0)
@@ -110,13 +110,13 @@ static void insertNode(TreeNode * t){
 				if (temp == NULL) {
 					printSemanticError(t, "undefined function or procedure call");
 				} else {
-					if (checkCallArguments(t, temp->node) == FALSE) {
-						printSemanticError(t, "arguments of function call does not match");
-					} else {
-						t->enclosingFunction = temp->node;
-					}
+					/* Anexa a assinatura da função ao nó de invocação para
+					poder verificar os argumentos na próxima verificação de
+					tipo */
+					t->enclosingFunction = temp->node;
 				}
 			}
+			break;
 		default:
 			break;
 	}
@@ -124,6 +124,8 @@ static void insertNode(TreeNode * t){
 
 /* Procedimento que executa a verificação de tipo de um nó da árvore */
 static void checkNode(TreeNode * t) {
+	BucketList temp;
+
 	switch (t->nodekind){
 		case ExpK:
 			/* Nós do tipo expressão precisam realizar a verificação dos tipos
@@ -193,7 +195,20 @@ static void checkNode(TreeNode * t) {
 						printSemanticError(t->child[0], "while test is not Boolean");
 					break;
 				case CallK:
+					/* Tipo de retorno da invocação é o mesmo da assinatura da
+					função ou procedimento anexada ao nó */
 					t->type = t->enclosingFunction->type;
+					/* Assumindo que os argumentos de uma chamada de função já
+					possuem atribuição de tipo por conta da execução em
+					pós-ordem desta análise, basta agora verificar se
+					os argumentos são equivalentes à assinatura da função ou
+					procedimento */
+					temp = st_lookup(t->name, NULL);
+					if (temp != NULL){
+						if (checkCallArguments(t, temp->node) == FALSE) {
+							printSemanticError(t, "arguments of function call does not match");
+						}
+					}
 					break;
 				case ReturnK:
 					/* Como a varredura é em pós-ordem, os nós internos de um
@@ -211,6 +226,7 @@ static void checkNode(TreeNode * t) {
 							printSemanticError(t->child[0], "return type of function does not match");
 						}
 					}
+					break;
 			}
 			break;
 		case DeclK:
@@ -225,9 +241,9 @@ static void checkNode(TreeNode * t) {
 					break;
 				case FunK:
 					if (t->type != Integer && t->type != Void)
-						printSemanticError(t->child[0], "function type must be either integer or void");
+						printSemanticError(t, "function type must be either integer or void");
 					else if (t->type == Integer && hasReturn == FALSE) {
-						printSemanticError(t->child[0], "return statement not found in non-void function");
+						printSemanticError(t, "return statement not found in non-void function");
 					}
 					hasReturn = FALSE;
 					break;
@@ -246,9 +262,6 @@ void typeCheck(TreeNode * syntaxTree) {
 /* Função que cria na tabela os símbolos pré definidos, que são as funções de
 entrada e saída de um programa padrão. */
 void declarePredefines( ) {
-
-	BucketList input = NULL;
-	BucketList output = NULL;
 
 	TreeNode * inputNode = NULL;
 	TreeNode * temp = NULL;
@@ -275,10 +288,8 @@ void declarePredefines( ) {
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
-    input = st_allocate(inputNode);
-	st_insert(input);
-	output = st_allocate(outputNode);
-	st_insert(output);
+	st_insert(inputNode);
+	st_insert(outputNode);
 }
 
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
@@ -286,6 +297,10 @@ definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode * syntaxTree) {
 	declarePredefines();
 	traverse(syntaxTree,insertNode,nullProc);
+
+	if (!hasMain) {
+		printSemanticError(syntaxTree, "no main function declared");
+	}
 	if (TraceAnalyze){
 		fprintf(listing, "\nSymbol table:\n\n");
 		st_print();

@@ -1,0 +1,16 @@
+/* Um programa que executa o cálculo do fatorial de um inteiro */
+
+int factorial(int n){
+	if(n == 1)
+		return 1;
+	else
+		return (n * factorial( n-1 ));
+}
+
+int main(void){
+	int a;
+	a = input();
+	a = factorial(a);
+	output(a);
+	return a;
+}

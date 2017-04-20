@@ -1,0 +1,7 @@
+/* Exemplo de entrada com erros de sintaxe - Declaração */
+
+/* Declaração incorreta de função - não declarou tipo de parâmetro */
+int main(a) {
+
+	return a;
+}

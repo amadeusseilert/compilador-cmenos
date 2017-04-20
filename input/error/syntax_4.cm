@@ -1,0 +1,12 @@
+/* Exemplo de entrada com erros de sintaxe - Operação */
+
+int main(void) {
+	int k;
+	k = 10 - 20;
+	while (k < 0) {
+		/* operação não presente na gramática */
+		k++;
+	}
+
+	return k;
+}

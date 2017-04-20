@@ -73,10 +73,10 @@ char * scopeName(TreeNode * node){
 
 /* Função que retorna a string do nome de um tipo */
 char * typeName(Type type){
-    static char i[] = "integer";
+    static char i[] = "int";
     static char v[] = "void";
-	static char b[] = "boolean";
-    static char invalid[] = "<<invalid type>>";
+	static char b[] = "bool";
+    static char invalid[] = "<<invalid>>";
 
     switch (type) {
     	case Integer:
@@ -228,13 +228,15 @@ CORRIGIR
 */
 void freeTree(TreeNode * tree) {
 
-	int i;
+	// int i;
+	//
+	// if (tree == NULL)
+	// 	return;
+	//
+	// for (i = 0; i < MAXCHILDREN; i++)
+	// 	freeTree(tree->child[i]);
+	// freeTree(tree->sibling);
+	// freeNode(tree);
 
-	if (tree == NULL)
-		return;
-
-	for (i = 0; i < MAXCHILDREN; i++)
-		freeTree(tree->child[i]);
-	freeTree(tree->sibling);
-	freeNode(tree);
+	free(tree);
 }

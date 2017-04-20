@@ -33,6 +33,8 @@ static YYSTYPE enclosingFunction = NULL;
 
 
 /*
+
+error-verbose = mostra mensagens de erro com mais informações.
 Abaixo está definido qual é a regra inicial da análise de sintaxe.
 Em seguida, estão definidos a totalidade dos tokens usados na gramática.
 Por fim, a declaração '%nonassoc' estabelece quais tokens não são associativos.
@@ -42,6 +44,7 @@ http://dinosaur.compilertools.net/bison/bison_6.html#SEC57
 */
 %}
 
+%error-verbose
 %start program
 
 %token IF ELSE WHILE RETURN INT VOID

@@ -1,0 +1,9 @@
+/* Exemplo de entrada com erros de semântica - Main */
+
+/* Ausência da função main */
+int function(void) {
+
+	int k;
+	k = 10 - 20;
+	return k;
+}

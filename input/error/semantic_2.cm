@@ -1,0 +1,8 @@
+/* Exemplo de entrada com erros de semântica - Retorno */
+
+int main(void) {
+
+	int k;
+	k = 10 - 20;
+	/* Função não void sem retorno */
+}

@@ -1,0 +1,8 @@
+/* Exemplo de entrada com erros léxicos */
+
+/* Este é um comentário, && deve ignorar aqui */
+int main(void){
+	int a;
+
+	return !a#;
+}

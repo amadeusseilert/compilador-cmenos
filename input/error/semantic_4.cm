@@ -1,0 +1,16 @@
+/* Exemplo de entrada com erros de semântica - Invocação */
+
+int function(void) {
+
+	int k;
+	k = 10 - 20;
+	return k;
+}
+
+int main(void) {
+
+	int a;
+	/* Argumentos inválidos */
+	a = function(a);
+	return a;
+}

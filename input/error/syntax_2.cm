@@ -1,0 +1,11 @@
+/* Exemplo de entrada com erros de sintaxe - Declaração */
+
+int main(void) {
+
+	/* Declaração inapropriada */
+	if (int k == 0) {
+		return k;
+	}
+
+	return k;
+}

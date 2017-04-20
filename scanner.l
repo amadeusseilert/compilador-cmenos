@@ -58,8 +58,7 @@ whitespace  [ \t]+
 {newline}       			{lineno++;}
 {whitespace}    			{/* não toma nenhuma ação */}
 
-"/*"             			{ignore(OC);}
-"*/"             			{return CC;}
+"/*"             			{ignore();}
 <<EOF>>						{return EOF;}
 .               			{printLexicalError(ERROR);}
 
@@ -67,13 +66,20 @@ whitespace  [ \t]+
 
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
-entre os tokens OC ("Open Commentary") e CC ("Close Commentary").
+entre as string de comentário. 
 */
-void ignore(TokenType currentToken) {
+void ignore() {
 
-	while (currentToken != CC){
-		currentToken = yylex();
-	}
+	char c1 = 0, c2 = 0;
+
+	c1 = input();
+
+	do {
+		c2 = c1;
+		c1 = input();
+	  	if (c1 == EOF) break;
+	  	if (c1 == '\n') lineno++;
+	} while (c1 != '/' && c2 != '*');
 }
 
 /*

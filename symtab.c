@@ -34,59 +34,44 @@ BucketList st_lookup (char * name, TreeNode * scope) {
 		if (strcmp(name, l->node->name) == 0){
 			if (scope != NULL && l->node->enclosingFunction != NULL) {
 				if (strcmp(scope->name, l->node->enclosingFunction->name) == 0)
-					found = TRUE;
+					return l;
 			} else if (scope == NULL && l->node->enclosingFunction == NULL)
-				found = TRUE;
+				return l;
 		}
 		l = l->next;
 	}
 
-	if (found == TRUE)
-		return l;
-	else
-		return NULL;
+	return NULL;
 }
 
-void st_insert (BucketList newBucket) {
-	int h = hash(newBucket->node->name);
+void st_insert (TreeNode * node) {
+	int h = hash(node->name);
 	BucketList l =  hashTable[h];
 
 	while (l != NULL) {
 		l = l->next;
 	}
 
-	l = newBucket;
-}
-
-BucketList st_allocate (TreeNode * node) {
-    struct BucketListRec * temp;
-
-    temp = (struct BucketListRec *) malloc(sizeof(BucketList));
-    if (temp == NULL){
-		Error = TRUE;
-		fprintf(listing,
-			"*** Out of memory allocating memory for symbol table\n");
-    } else {
-		temp->node = node;
-		temp->next = NULL;
-    }
-    return temp;
+	l = (BucketList) malloc(sizeof(struct BucketListRec));
+	l->node = node;
+	l->next = hashTable[h];
+	hashTable[h] = l;
 }
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
 void st_print () {
 	int i;
-	fprintf(listing,"Variable Name\tType\tScope Name\tLine Number\n");
-	fprintf(listing,"----------\t------\t----------\t---\n");
+	fprintf(listing,"Variable Name\tType\tScope Name\tLine #\n");
+	fprintf(listing,"-------------\t----\t----------\t------\n");
 	for (i=0;i<SIZE;++i) {
 		if (hashTable[i] != NULL) {
 			BucketList l = hashTable[i];
 			while (l != NULL) {
-				fprintf(listing,"%-14s ", l->node->name);
-				fprintf(listing,"%-7s ", typeName(l->node->type));
-				fprintf(listing,"%-14s ", scopeName(l->node->enclosingFunction));
-				fprintf(listing,"%d ", l->node->lineno);
+				fprintf(listing,"%-15s", l->node->name);
+				fprintf(listing,"%-10s", typeName(l->node->type));
+				fprintf(listing,"%-14s", scopeName(l->node->enclosingFunction));
+				fprintf(listing,"%d", l->node->lineno);
 				fprintf(listing,"\n");
 				l = l->next;
 			}

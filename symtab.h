@@ -25,9 +25,7 @@ typedef struct BucketListRec {
 
 BucketList st_lookup (char * name, TreeNode * scope);
 
-void st_insert (BucketList newBucket);
-
-BucketList st_allocate (TreeNode * node);
+void st_insert (TreeNode * node);
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
