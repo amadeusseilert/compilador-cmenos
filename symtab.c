@@ -74,17 +74,17 @@ void st_insert (TreeNode * node, int loc) {
 'listing' */
 void st_print () {
 	int i;
-	fprintf(listing,"Variable Name\tType\tScope Name\tLine #\tLocation\n");
-	fprintf(listing,"-------------\t----\t----------\t------\t--------\n");
+	fprintf(listing,"       Name        Type       Scope          Line #   Location\n");
+	fprintf(listing,"--------------------------------------------------------------\n");
 	for (i=0;i<SIZE;++i) {
 		if (hashTable[i] != NULL) {
 			BucketList l = hashTable[i];
 			while (l != NULL) {
-				fprintf(listing,"%-15s", l->node->name);
-				fprintf(listing,"%-10s", typeName(l->node->type));
+				fprintf(listing,"(%s) ", declKindName(l->node->kind.decl));
+				fprintf(listing,"%-13s", l->node->name);
+				fprintf(listing,"%-11s", typeName(l->node->type));
 				fprintf(listing,"%-15s", scopeName(l->node->enclosingFunction));
-				fprintf(listing,"%d\t", l->node->lineno);
-				fprintf(listing,"%#06x", l->location);
+				fprintf(listing,"%.4d%-5s%#06x", l->node->lineno," ", l->location);
 				fprintf(listing,"\n");
 				l = l->next;
 			}

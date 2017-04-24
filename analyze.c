@@ -60,7 +60,7 @@ static int checkCallArguments (TreeNode * callNode, TreeNode * functionNode) {
 	while (arg != NULL && param != NULL) {
 		/* Como os argumentos e parâmetros devem seguir a mesma ordem, basta
 		verificar os tipos */
-		if (arg->type != param->type || arg->idtype != param->idtype)
+		if (arg->type != param->type)
 			return FALSE;
 		arg = arg->sibling;
 		param = param->sibling;
@@ -77,14 +77,37 @@ static void insertNode(TreeNode * t){
 	BucketList temp;
 	switch (t->nodekind){
 		case DeclK:
+			/* Aqui é importante mencionar que. para a exeução de código, é
+			necessário apenas manter informações de declarações de variáveis.
+			Não obstante, a critério de vizualização do que foi identificado em
+			um contexto semântico, todas os tipos de declarações serão inseridas
+			na tabela, contudo, a localização será delas será '0' */
 			temp = st_lookup(t->name, t->enclosingFunction);
 			if (temp != NULL){
 				/* temp não é nulo, significa que já ocorreu a declaração
 				com o mesmo nome e mesmo escopo anteriormente */
 				printSemanticError(t, "duplicate identifier declared");
 			} else {
-				/* Nova declaração, insere na tabela de símbolos */
-				st_insert(t, location++);
+				/* Nova declaração de um símbolo, insere na tabela de símbolos */
+
+				/* A declaração de uma variável implica na determinação de uma
+				posição na memória virtual a qual será utilizada para gerar
+				código. */
+				if (t->kind.decl == VarK) {
+
+					if (t->idtype == Array) {
+						st_insert(t, location);
+						location += t->val;
+					} else {
+						st_insert(t, location++);
+					}
+				} else {
+					/* Declarações de parametros e funções não são símbolos
+					efetivamente, posteriormente, funções são traduzidas para
+					um segmento de código com um rótulo e parâmetros em
+					temporários */
+					st_insert(t, 0x0);
+				}
 				/* Verifica se ocorreu a declaração da função main*/
 				if (t->kind.decl == FunK && hasMain == FALSE)
 					if (strcmp(t->name, "main") == 0)
@@ -274,6 +297,8 @@ void declarePredefines( ) {
 
 	/* define "int input()" */
 	inputNode = newNode();
+	inputNode->nodekind = DeclK;
+	inputNode->kind.decl = FunK;
 	inputNode->lineno = 0;
 	inputNode->name = copyString("input");
 	inputNode->idtype = Function;
@@ -281,6 +306,7 @@ void declarePredefines( ) {
 
     /* define o argumento do procedimento "output" */
     temp = newNode();
+	temp->nodekind = ExpK;
 	temp->lineno = 0;
     temp->name = copyString("arg");
     temp->type = Integer;
@@ -288,14 +314,17 @@ void declarePredefines( ) {
 
 	/* define "void output(int)" */
     outputNode = newNode();
+	outputNode->nodekind = DeclK;
+	outputNode->kind.decl = FunK;
 	outputNode->lineno = 0;
     outputNode->name = copyString("output");
     outputNode->type = Void;
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
-	st_insert(inputNode, location++);
-	st_insert(outputNode, location++);
+	st_insert(inputNode, 0x0);
+	st_insert(outputNode, 0x0);
+	location++;
 }
 
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é

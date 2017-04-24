@@ -8,6 +8,18 @@
 #include "globals.h"
 #include "util.h"
 
+static char invalid[] = "<<unk>>";
+
+static char i[] = "int";
+static char v[] = "void";
+static char b[] = "bool";
+
+static char var[] = "var";
+static char fun[] = "fun";
+static char par[] = "par";
+
+static char g[] = "_global_";
+
 /*
 Procedimento que imprime um token e seu lexema no arquivo listitng
 */
@@ -57,8 +69,23 @@ void printToken(TokenType token, const char* tokenString ) {
     }
 }
 
+char * declKindName(DeclKind kind){
+	switch (kind) {
+		case VarK:
+			return var;
+			break;
+		case FunK:
+			return fun;
+			break;
+		case ParamK:
+			return par;
+			break;
+		default:
+			return invalid;
+	}
+}
+
 char * scopeName(TreeNode * node){
-	static char g[] = "_global_";
 	char * scopeName;
 
 	if (node == NULL)
@@ -73,11 +100,6 @@ char * scopeName(TreeNode * node){
 
 /* Função que retorna a string do nome de um tipo */
 char * typeName(Type type){
-    static char i[] = "int";
-    static char v[] = "void";
-	static char b[] = "bool";
-    static char invalid[] = "<<invalid>>";
-
     switch (type) {
     	case Integer:
 		 	return i;
@@ -164,7 +186,7 @@ void printTree(TreeNode * tree){
           			fprintf(listing, "Assign\n");
           			break;
 				case CallK:
-					fprintf(listing, "Call: %s\n",tree->name);
+					fprintf(listing, "Call: %s\n", tree->name);
 					break;
         		case ReturnK:
           			fprintf(listing, "Return\n");
@@ -180,10 +202,10 @@ void printTree(TreeNode * tree){
           			printToken(tree->op, "\0");
           			break;
 	        	case ConstK:
-	          		fprintf(listing, "Const: %d\n",tree->val);
+	          		fprintf(listing, "Const: %d\n", tree->val);
 	          		break;
 	        	case IdK:
-	          		fprintf(listing, "Id: %s Scope: %s\n",tree->name, scopeName(tree->enclosingFunction));
+	          		fprintf(listing, "Id: %s\n", tree->name);
 	          		break;
 	        	default:
 	          		fprintf(listing, "Unknown ExpNode kind\n");
@@ -192,13 +214,13 @@ void printTree(TreeNode * tree){
     	} else if (tree->nodekind == DeclK) {
 			switch (tree->kind.decl) {
 				case VarK:
-					fprintf(listing, "Variable: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
+					fprintf(listing, "Variable: %s Type: %s\n", tree->name, typeName(tree->type));
 					break;
 				case FunK:
-					fprintf(listing, "Function: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
+					fprintf(listing, "Function: %s Type: %s\n", tree->name, typeName(tree->type));
 					break;
 				case ParamK:
-					fprintf(listing, "Parameter: %s Type: %s Scope: %s\n", tree->name, typeName(tree->type), scopeName(tree->enclosingFunction));
+					fprintf(listing, "Parameter: %s Type: %s\n", tree->name, typeName(tree->type));
 					break;
 				default:
 					fprintf(listing, "Unknown DeclNode kind\n");

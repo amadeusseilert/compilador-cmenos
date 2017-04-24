@@ -23,7 +23,6 @@ static char * savedName; /* Usado em Mid-Rule para expressões*/
 funções anônimas, é necessário utilizar um vetor de nomes salvos.*/
 static char * savedFunctionName; /* Usado em Mid-Rule para expressões */
 static int savedValue; /* Usado em Mid-Rule */
-static int savedLineNo;  /* Usado em Mid-Rule */
 
 /* Armazena a árvore de sintaxe para uso posterior. */
 static YYSTYPE savedTree = NULL;
@@ -213,6 +212,7 @@ param : 	type_specifier ID
 				identificador */
 				$$ = $1;
 				$$->nodekind = DeclK;
+				$$->enclosingFunction = enclosingFunction;
 				$$->kind.decl = ParamK;
 				$$->name = savedName;
 				$$->idtype = Array;
@@ -328,32 +328,27 @@ expression : var ASSIGN expression
          	| simple_expression { $$ = $1; }
          	;
 
- var : 		ID
+ var : 		var_id
  			{
+				$$ = $1;
+				$$->idtype = Simple;
+         	}
+			| var_id LBRCKT expression RBRCKT
+			{
+				$$ = $1;
+				$$->idtype = Array;
+				$$->child[0] = $3;
+			}
+    		;
+
+var_id:		ID
+			{
 				$$ = newNode();
 				$$->nodekind = ExpK;
 				$$->kind.exp = IdK;
 				$$->name = copyString(lastTokenString);
 				$$->enclosingFunction = enclosingFunction;
-				$$->idtype = Simple;
-         	}
-			| ID
-			{
-				savedLineNo = lineno;
-				savedName = copyString(lastTokenString);
 			}
-					LBRCKT expression RBRCKT
-			{
-				$$ = newNode();
-				$$->nodekind = ExpK;
-				$$->kind.exp = IdK;
-				$$->name = savedName;
-				$$->lineno = savedLineNo;
-				$$->enclosingFunction = enclosingFunction;
-				$$->idtype = Array;
-				$$->child[0] = $4;
-			}
-    		;
 
 simple_expression : additive_expression relop additive_expression
 			{
@@ -470,23 +465,24 @@ factor : 	LPAREN expression RPAREN { $$ = $2; }
      		| var { $$ = $1; }
      		;
 
-call : 		ID
- 			{
-				savedName = copyString(lastTokenString);
-				savedLineNo = lineno;
-			}
-					LPAREN args RPAREN
+call : 		call_id LPAREN args RPAREN
 			{
 				/* Aqui define-se o nó de invocação para funções */
+				$$ = $1;
+                $$->child[0] = $3;
+            }
+        	;
+
+call_id:	ID
+			{
 				$$ = newNode();
 				$$->nodekind = StmtK;
 				$$->kind.stmt = CallK;
-				$$->name = savedName;
-				$$->lineno = savedLineNo;
-                $$->idtype = Function;
-                $$->child[0] = $4;
-            }
-        	;
+				$$->name = copyString(lastTokenString);
+				$$->idtype = Function;
+				$$->lineno = lineno;
+			}
+			;
 
 args : 		arg_list { $$ = $1; }
     		| { $$ = NULL; }

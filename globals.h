@@ -53,7 +53,7 @@ typedef int TokenType;
 
 extern FILE* source; /* Código fonte, arquivo de entrada */
 extern FILE* listing; /* Arquivo para listagem e debug */
-//extern FILE* code; /* Arquivo output para a C-Machine */
+extern FILE* code; /* Arquivo output para a C-Machine */
 
 extern int lineno; /* Contador de linhas para listagem */
 

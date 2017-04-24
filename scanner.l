@@ -12,6 +12,7 @@
 /* Lexema de um token */
 char tokenString[MAXTOKENLEN + 1];
 char lastTokenString[MAXTOKENLEN + 1];
+
 %}
 
 digit       [0-9]
@@ -19,7 +20,10 @@ number      {digit}+
 letter      [a-zA-Z]
 word  		{letter}+
 identifier	{word}({word}|{number})*
-newline     \n
+unix_newline \n
+windows_newline \r\n
+mac_newline	\r
+newline {unix_newline}|{windows_newline}|{mac_newline}
 whitespace  [ \t]+
 
 %option noyywrap
@@ -66,7 +70,7 @@ whitespace  [ \t]+
 
 /*
 Procedimento responsável por ignorar a leitura de qualquer string que estiver
-entre as string de comentário. 
+entre as string de comentário.
 */
 void ignore() {
 
@@ -88,8 +92,9 @@ Procedimento responsável em emitir as mensagens de erro léxico no listing.
 void printLexicalError(TokenType currentToken) {
 	strncpy(tokenString, yytext, MAXTOKENLEN);
 	printf(ANSI_COLOR_RED "Lexical Error" ANSI_COLOR_RESET " at line %d\n",lineno);
-	printf("Token: ");
+	printf("Token: %s", yytext);
 	printToken(currentToken, tokenString);
+	Error = TRUE;
 }
 
 /*

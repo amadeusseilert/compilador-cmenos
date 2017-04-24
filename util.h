@@ -13,6 +13,8 @@ Procedimento que imprime um token e seu lexema no arquivo listitng
 */
 void printToken(TokenType, const char* );
 
+char * declKindName(DeclKind kind);
+
 char * scopeName(TreeNode * node);
 
 /* Função que retorna a string do nome de um tipo */
