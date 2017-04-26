@@ -10,6 +10,21 @@
 #include "util.h"
 
 
+/* Escopo global */
+Scope globalScope;
+/* Armazena todos os escopos identificados na  análise semântica */
+static Scope scopes[MAX_SCOPE];
+/* Quantidade total de escopos econtrados */
+static int nScope = 0;
+/* Pilha que armazena o aninhamento de escopos. O escopo começa na base da
+pilha */
+static Scope scopeStack[MAX_SCOPE];
+/* Quantidade de escopos na pilha scopeStack */
+static int nScopeStack = 0;
+/* Armazena os contadores de localizações de memória virtual de cada escopo.
+Cada novo escopo começa com o valor 0x0 */
+static int location[MAX_SCOPE];
+
 /* Função hashing. Responsável por gerar um índice a partir de um nome de
 variável 'key' */
 static int hash (char * key) {
@@ -22,34 +37,79 @@ static int hash (char * key) {
 	return temp;
 }
 
-/* Tabela de símbolos */
-static BucketList hashTable[SIZE];
+/* Retorna o escopo no topo da pilha de escopos */
+Scope sc_top( void ){
+	return scopeStack[nScopeStack - 1];
+}
 
-/* Executa uma busca na tabela por um nome e nome de escopo em comum. Se for
-encontrado, o símbolo é retornado, caso contrário, retorna NULL. Caso scope
-seja NULL, considera-se que o escopo de busca é apenas global */
-BucketList st_lookup (char * name, TreeNode * scope) {
+/* Desempilha o topo da pilha */
+void sc_pop( void ){
+  	--nScopeStack;
+}
+
+/* Retorna a localização mais alta do escopo no topo da pilha */
+int sc_location( void ){
+  	return location[nScopeStack - 1]++;
+}
+
+/* Empilha um escopo na pilha */
+void sc_push( Scope scope ){
+	scopeStack[nScopeStack] = scope;
+  	location[nScopeStack++] = 0;
+}
+
+/* Cria um novo escopo a partir de um nome de uma função ou procedimento */
+Scope sc_create(char * funcName){
+	Scope newScope;
+
+  	newScope = (Scope) malloc(sizeof(struct ScopeRec));
+  	newScope->name = funcName;
+  	newScope->nestedLevel = nScopeStack;
+  	newScope->parent = sc_top();
+
+  	scopes[nScope++] = newScope;
+  	return newScope;
+}
+
+ /* Busca pela posição na memória de um símbolo em todos os escopos */
+int st_lookup ( char * name ){
+	BucketList l = st_bucket(name);
+  	if (l != NULL)
+		return l->location;
+  	return -1;
+}
+
+/* Executa uma busca na tabela por um nome em todos os escopos. Se for
+encontrado, o símbolo é retornado, caso contrário, retorna NULL.*/
+BucketList st_bucket (char * name) {
 	int h = hash(name);
-	BucketList l =  hashTable[h];
+	Scope sc = sc_top();
+	while(sc) {
+		BucketList l = sc->hashTable[h];
 
-	while (l != NULL){
-		/* Tenta encontrar um símbolo com o mesmo nome */
-		if (strcmp(name, l->node->name) == 0){
-			/* Verifica se o símbolo encontrado possui escopo local, e se
-			o escopo passado também é local */
-			if (scope != NULL && l->node->enclosingFunction != NULL) {
-				/* Tenta verificar se os nomes dos escopos são iguais */
-				if (strcmp(scope->name, l->node->enclosingFunction->name) == 0)
-					return l;
-			}
-			/* Se ambos os escopos são nulos, e os nomes são iguais, significa
-			que existe um símbolo em escopo global encontrado */
-			else if (scope == NULL && l->node->enclosingFunction == NULL)
-				return l;
-		}
-		l = l->next;
+		while ((l != NULL) && (strcmp(name, l->node->name) != 0))
+	  		l = l->next;
+		if (l != NULL)
+			return l;
+		sc = sc->parent;
 	}
+	return NULL;
+}
 
+/* Executa uma busca na tabela por um nome em no escopo no topo da pilha. Se for
+encontrado, o símbolo é retornado, caso contrário, retorna NULL.*/
+BucketList st_bucket_top (char * name) {
+	int h = hash(name);
+	Scope sc = sc_top();
+
+	if (sc != NULL){
+		BucketList l = sc->hashTable[h];
+
+		while ((l != NULL) && (strcmp(name, l->node->name) != 0))
+	  		l = l->next;
+		if (l != NULL)
+			return l;
+	}
 	return NULL;
 }
 
@@ -57,59 +117,48 @@ BucketList st_lookup (char * name, TreeNode * scope) {
 utiliza-se a lista encadeada na posição percorrendo até uma referência livre */
 void st_insert (TreeNode * node, int loc) {
 	int h = hash(node->name);
-	BucketList l =  hashTable[h];
+	Scope top = sc_top();
 
-	while (l != NULL) {
-		l = l->next;
+	BucketList l =  top->hashTable[h];
+
+	while (l != NULL)
+    	l = l->next;
+
+	if (l == NULL){
+		l = (BucketList) malloc(sizeof(struct BucketListRec));
+		l->node = node;
+		l->location = loc;
+		l->next = top->hashTable[h];
+		top->hashTable[h] = l;
 	}
-
-	l = (BucketList) malloc(sizeof(struct BucketListRec));
-	l->node = node;
-	l->location = loc;
-	l->next = hashTable[h];
-	hashTable[h] = l;
 }
 
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
 void st_print () {
-	int i;
-	fprintf(listing,"       Name        Type       Scope          Line #   Location\n");
-	fprintf(listing,"--------------------------------------------------------------\n");
-	for (i=0;i<SIZE;++i) {
-		if (hashTable[i] != NULL) {
-			BucketList l = hashTable[i];
-			while (l != NULL) {
-				fprintf(listing,"(%s) ", declKindName(l->node->kind.decl));
-				fprintf(listing,"%-13s", l->node->name);
-				fprintf(listing,"%-11s", typeName(l->node->type));
-				fprintf(listing,"%-15s", scopeName(l->node->enclosingFunction));
-				fprintf(listing,"%.4d%-5s%#06x", l->node->lineno," ", l->location);
-				fprintf(listing,"\n");
-				l = l->next;
+	int i, j;
+
+	for (i = 0; i < nScope; i++){
+		Scope scope = scopes[i];
+		BucketList * hashTable = scope->hashTable;
+		fprintf(listing, "Scope: <%s> - Nested level: %d\n", scope->name, scope->nestedLevel);
+		fprintf(listing,"-----------------------------------------------\n");
+		fprintf(listing,"       Name        Type       Line #   Location\n");
+		fprintf(listing,"-----------------------------------------------\n");
+		for (j = 0; j < SIZE; ++j) {
+			if (hashTable[j] != NULL) {
+				BucketList l = hashTable[j];
+				while (l != NULL) {
+					fprintf(listing,"(%s) ", declKindName(l->node->kind.decl));
+					fprintf(listing,"%-13s", l->node->name);
+					fprintf(listing,"%-11s", typeName(l->node->type));
+					fprintf(listing,"%.4d%-5s%#06x", l->node->lineno," ", l->location);
+					fprintf(listing,"\n");
+					l = l->next;
+				}
 			}
 		}
-	}
-}
+		fprintf(listing,"-----------------------------------------------\n");
 
-/* Libera a memória de um bucket da tabela */
-void st_free_bucket (BucketList l) {
-	l->node = NULL;
-	free(l);
-}
-
-/* Libera a memória da tabela de símbolos por completo */
-void st_free () {
-
-	int i;
-
-	for (i = 0; i < SIZE; i++){
-		if (hashTable[i] != NULL){
-			BucketList l = hashTable[i];
-			while (l->next != NULL){
-				l = l->next;
-			}
-			st_free_bucket(l);
-		}
 	}
 }

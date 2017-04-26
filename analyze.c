@@ -13,9 +13,8 @@
 static int hasReturn = FALSE;
 /* Usado para saber se ocorreu a declaração da função main */
 static int hasMain = FALSE;
-/* Contador de valor de endereço virtual de memória, será usado posteriormente
-para a geração de código */
-static int location = 0x0;
+/* Controla as declarações em escopos aninhados */
+static int hasFunctionScopeDeclared = FALSE;
 
 /* Procedimento "faz nada", possibilitando gerar execuções de pré-ordem apenas,
 ou pós-ordem. */
@@ -77,64 +76,39 @@ static void insertNode(TreeNode * t){
 	BucketList temp;
 	switch (t->nodekind){
 		case DeclK:
-			/* Aqui é importante mencionar que. para a exeução de código, é
-			necessário apenas manter informações de declarações de variáveis.
-			Não obstante, a critério de vizualização do que foi identificado em
-			um contexto semântico, todas os tipos de declarações serão inseridas
-			na tabela, contudo, a localização será delas será '0' */
-			temp = st_lookup(t->name, t->enclosingFunction);
+			temp = st_bucket_top(t->name);
 			if (temp != NULL){
 				/* temp não é nulo, significa que já ocorreu a declaração
 				com o mesmo nome e mesmo escopo anteriormente */
 				printSemanticError(t, "duplicate identifier declared");
 			} else {
-				/* Nova declaração de um símbolo, insere na tabela de símbolos */
-
-				/* A declaração de uma variável implica na determinação de uma
-				posição na memória virtual a qual será utilizada para gerar
-				código. */
-				if (t->kind.decl == VarK) {
-
-					if (t->idtype == Array) {
-						st_insert(t, location);
-						location += t->val;
-					} else {
-						st_insert(t, location++);
-					}
-				} else {
-					/* Declarações de parametros e funções não são símbolos
-					efetivamente, posteriormente, funções são traduzidas para
-					um segmento de código com um rótulo e parâmetros em
-					temporários */
-					st_insert(t, 0x0);
-				}
-				/* Verifica se ocorreu a declaração da função main*/
-				if (t->kind.decl == FunK && hasMain == FALSE)
-					if (strcmp(t->name, "main") == 0)
+				st_insert(t, sc_location());
+				/* Verifica se o tipo de declaração é uma função ou procedimento */
+				if (t->kind.decl == FunK){
+					/* Cria um novo escopo no primeiro nível de aninhamento */
+					sc_push(sc_create(t->name));
+					hasFunctionScopeDeclared = TRUE;
+					/* Verifica se ocorreu a declaração da função main*/
+					if (hasMain == FALSE && strcmp(t->name, "main") == 0)
 						hasMain = TRUE;
+				}
 			}
 			break;
 		case ExpK:
 			/* Verifica se o uso de um identificador é legal */
 			if (t->kind.exp == IdK) {
-				/* Busca na tabela se existe a declaração da variável no
-				escopo local */
-				temp = st_lookup(t->name, t->enclosingFunction);
+				/* Busca na tabela se existe a declaração da variável na
+				tabela de símbolo */
+				temp = st_bucket(t->name);
 				if (temp == NULL){
-					/* Busca a declaração no escopo global */
-					temp = st_lookup(t->name, NULL);
-					if (temp == NULL)
-						printSemanticError(t, "undeclared variable");
+					printSemanticError(t, "undeclared variable");
 				}
 			}
 			break;
 		case StmtK:
-			/* Verifica se ocorre uma invocação de uma função que existe */
 			if (t->kind.stmt == CallK) {
-				/* Todas as funções possuem escopo global. Eventuais mudanças
-				na gramática para funções anônimas implicam a alteração nesta
-				lógica. */
-				temp = st_lookup(t->name, NULL);
+				/* Verifica se ocorre uma invocação de uma função que existe */
+				temp = st_bucket(t->name);
 				if (temp == NULL) {
 					printSemanticError(t, "undefined function or procedure call");
 				} else {
@@ -143,6 +117,17 @@ static void insertNode(TreeNode * t){
 					tipo */
 					t->enclosingFunction = temp->node;
 				}
+			} else if (t->kind.stmt == CmpdK) {
+				/* Aqui faz a discriminação dos níveis de aninhamento. Se
+				hasFunctionScopeDeclared = TRUE, quer dizer que acabou de sair
+				de um nó de declaração, ou seja, nestedLevel = 1. Caso contrário,
+				encontrou um novo escopo aninhado */
+				if (hasFunctionScopeDeclared) {
+            		hasFunctionScopeDeclared = FALSE;
+          		} else {
+            		Scope scope = sc_create(t->enclosingFunction->name);
+            		sc_push(scope);
+          		}
 			}
 			break;
 		default:
@@ -231,7 +216,7 @@ static void checkNode(TreeNode * t) {
 					pós-ordem desta análise, basta agora verificar se
 					os argumentos são equivalentes à assinatura da função ou
 					procedimento */
-					temp = st_lookup(t->name, NULL);
+					temp = st_bucket(t->name);
 					if (temp != NULL){
 						if (checkCallArguments(t, temp->node) == FALSE) {
 							printSemanticError(t, "arguments of function call does not match");
@@ -282,6 +267,23 @@ static void checkNode(TreeNode * t) {
 	}
 }
 
+/* */
+static void afterInsertNode( TreeNode * t ) {
+	switch (t->nodekind){
+		case StmtK:
+	      	switch (t->kind.stmt){
+				case CmpdK:
+	          		sc_pop();
+	          		break;
+	        	default:
+	          		break;
+	      	}
+      	break;
+    default:
+      break;
+  	}
+}
+
 /* Procedimento em pós-ordem para verificar os tipos dos nós da árvore */
 void typeCheck(TreeNode * syntaxTree) {
 	traverse(syntaxTree, nullProc, checkNode);
@@ -322,16 +324,17 @@ void declarePredefines( ) {
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
-	st_insert(inputNode, 0x0);
-	st_insert(outputNode, 0x0);
-	location++;
+	st_insert(inputNode, sc_location());
+	st_insert(outputNode, sc_location());
 }
 
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
 definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode * syntaxTree) {
+	globalScope = sc_create("_GLOBAL_");
+  	sc_push(globalScope);
 	declarePredefines();
-	traverse(syntaxTree,insertNode,nullProc);
+	traverse(syntaxTree, insertNode, afterInsertNode);
 
 	if (!hasMain) {
 		printSemanticError(syntaxTree, "no main function declared");

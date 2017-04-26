@@ -13,21 +13,57 @@
 
 /* Potência de dois para o deslocamento como multiplicador na função de hash */
 #define SHIFT 4
+/* Quantidade máxima de escopos que podem existir em um código */
+#define MAX_SCOPE 64
 
-/* O registro na lista de buckets para cada variável, o qual mantém informações
-do nó da árovre e localização na memória. É importante notar que um
+/* Definição de um bucket para uma tabela de símbolos. É importante notar que um
 bucket possui referência encadeada também, para tratar colisões na função
 hash */
 typedef struct BucketListRec {
-	TreeNode * node;
+	TreeNode * node; /* Ref. do nó da árvore de sintaxe */
 	int location; /* Posição de memória usado para geração de código */
-	struct BucketListRec * next;
+	struct BucketListRec * next; /* Ref. do próximo bucket */
 } * BucketList;
 
-/* Executa uma busca na tabela por um nome e nome de escopo em comum. Se for
-encontrado, o símbolo é retornado, caso contrário, retorna NULL. Caso scope
-seja NULL, considera-se que o escopo de busca é apenas global */
-BucketList st_lookup (char * name, TreeNode * scope);
+/* Definição de um escopo. Este possui uma tabela de símbolo própria. Na
+gramática do C-, só é possível ocorrer declarações de funções no escopo global,
+entretanto, esta estrutura já está pronta para eventuais modificações. */
+typedef struct ScopeRec {
+	char * name; /* Nome da função ou procedimento */
+	int nestedLevel; /* Nível de aninhamento */
+	struct ScopeRec * parent; /* Escopo 'pai'*/
+	BucketList hashTable[SIZE]; /* Tabela de símbolos do escopo */
+} * Scope;
+
+/* A exportação do escopo global ocorre por conta que sua inicialização ocorrerá
+no começo da construção das tabelas de símbolos */
+extern Scope globalScope;
+
+/* Retorna o escopo no topo da pilha de escopos */
+Scope sc_top( void );
+
+/* Desempilha o topo da pilha */
+void sc_pop( void );
+
+/* Retorna a localização mais alta do escopo no topo da pilha */
+int sc_location( void );
+
+/* Empilha um escopo na pilha */
+void sc_push( Scope scope );
+
+/* Cria um novo escopo a partir de um nome de uma função ou procedimento */
+Scope sc_create(char * funcName);
+
+/* Busca pela posição na memória de um símbolo em todos os escopos */
+int st_lookup (char * name);
+
+/* Executa uma busca na tabela por um nome em todos os escopos. Se for
+encontrado, o símbolo é retornado, caso contrário, retorna NULL.*/
+BucketList st_bucket (char * name);
+
+/* Executa uma busca na tabela por um nome em no escopo no topo da pilha. Se for
+encontrado, o símbolo é retornado, caso contrário, retorna NULL.*/
+BucketList st_bucket_top (char * name);
 
 /* Insere um símbolo na tabela, caso a função hash retorne um índice já ocupado,
 utiliza-se a lista encadeada na posição percorrendo até uma referência livre */
@@ -36,12 +72,6 @@ void st_insert (TreeNode * node, int loc);
 /* Procedimento que imprime a tabela de símbolos no arquivo de depuração
 'listing' */
 void st_print ();
-
-/* Libera a memória de um bucket da tabela */
-void st_free_bucket (BucketList l);
-
-/* Libera a memória da tabela de símbolos por completo */
-void st_free ();
 
 
 #endif

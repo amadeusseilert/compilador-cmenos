@@ -221,12 +221,13 @@ param : 	type_specifier ID
 
 compound_stmt : LBRACE local_declarations statement_list RBRACE
 			{
-				/* Essa regra define que, dentro de uma função, sempre deve ser
+				/* Essa regra define que, dentro de um escopo, sempre deve ser
 				feito declaração das variáveis antes da utilização delas em
 				eventuais expressões. */
             	$$ = newNode();
 				$$->nodekind = StmtK;
 				$$->kind.stmt = CmpdK;
+				$$->enclosingFunction = enclosingFunction;
             	$$->child[0] = $2;
 				$$->child[1] = $3;
 			}
@@ -304,6 +305,8 @@ return_decl : RETURN SEMI
 			{
 				$$ = newNode();
 				$$->nodekind = StmtK;
+				/* A partir desta atribuição, será possível avaliar se o retorno
+				é válido semânticamente */
 				$$->enclosingFunction = enclosingFunction;
 				$$->kind.stmt = ReturnK;
 			}
@@ -510,7 +513,7 @@ Função responsável em emitir as mensagens de erro de sintaxe no listing.
 int yyerror(char * message) {
 	printf(ANSI_COLOR_RED "Syntax Error" ANSI_COLOR_RESET " at line %d: %s\n", lineno, message);
 	printf("Current token: ");
-	printToken(yychar, lastTokenString);
+	printToken(yychar, tokenString);
 	Error = TRUE;
 	return 0;
 }

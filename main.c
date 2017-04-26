@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
 	// 	exit(1);
 	// }
 	// fclose(code);
-	st_free();
+	//st_free();
 #endif
 	freeTree(syntaxTree);
 #endif
