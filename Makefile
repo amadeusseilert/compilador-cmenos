@@ -3,7 +3,6 @@
 # Amadeus T. Seilert
 
 # CC = compilador escolhido
-# EXE = nome do executável para o compilador
 # CLEAN-CMD = comando de terminal que consegue deletar arquivos do SO
 # CFLAGS = flags do compilador
 # OBJS = objetos gerados a partir de cada módulo do compilador.
@@ -17,13 +16,11 @@
 
 CC = gcc
 
-EXE = c-compiler
-
 CLEAN-CMD = rm -f
 
 CFLAGS = -Wall -g
 
-OBJS = main.o util.o analyze.o symtab.o lex.yy.o parser.tab.o
+OBJS = main.o util.o analyze.o symtab.o lex.yy.o parser.tab.o code.o cgen.o
 
 all: parser.tab.c lex.yy.c c-compiler.exe clean
 
@@ -34,9 +31,9 @@ lex.yy.c: scanner.l scanner.h globals.h util.h
 	flex scanner.l
 
 c-compiler.exe: $(OBJS)
-	$(CC) $(CFLAGS) -o $(EXE) $(OBJS)
+	$(CC) $(CFLAGS) -o c-compiler $(OBJS)
 
-main.o: main.c util.h analyze.h symtab.h globals.h parser.h scanner.h
+main.o: main.c util.h analyze.h symtab.h globals.h parser.h scanner.h cgen.h
 	$(CC) $(CFLAGS) -c main.c
 
 util.o: util.c util.h globals.h
@@ -48,6 +45,12 @@ symtab.o: symtab.c symtab.h util.h globals.h
 analyze.o: analyze.c analyze.h symtab.h util.h globals.h
 	$(CC) $(CFLAGS) -c analyze.c
 
+code.o: code.c code.h globals.h
+	$(CC) $(CFLAGS) -c code.c
+
+cgen.o: cgen.c globals.h symtab.h code.h cgen.h
+	$(CC) $(CFLAGS) -c cgen.c
+
 lex.yy.o: lex.yy.c globals.h util.h
 	$(CC) $(CFLAGS) -c lex.yy.c
 
@@ -55,12 +58,7 @@ parser.tab.o: parser.tab.c parser.tab.h globals.h util.h scanner.h
 	$(CC) $(CFLAGS) -c parser.tab.c
 
 clean:
-	$(CLEAN-CMD) util.o
-	$(CLEAN-CMD) analyze.o
-	$(CLEAN-CMD) symtab.o
-	$(CLEAN-CMD) lex.yy.o
-	$(CLEAN-CMD) parser.tab.o
 	$(CLEAN-CMD) parser.tab.c
 	$(CLEAN-CMD) parser.tab.h
 	$(CLEAN-CMD) lex.yy.c
-	$(CLEAN-CMD) main.o
+	$(CLEAN-CMD) $(OBJS)

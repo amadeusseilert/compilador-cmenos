@@ -14,7 +14,7 @@
 /* set NO_CODE to TRUE to get a compiler that does not
  * generate code
  */
-//#define NO_CODE FALSE
+#define NO_CODE FALSE
 
 #include "util.h"
 #if NO_PARSE
@@ -24,9 +24,9 @@
 #if !NO_ANALYZE
 #include "analyze.h"
 #include "symtab.h"
-// #if !NO_CODE
-// #include "cgen.h"
-// #endif
+#if !NO_CODE
+#include "cgen.h"
+#endif
 #endif
 #endif
 
@@ -43,6 +43,7 @@ FILE * code;
 int TraceScan = TRUE;
 int TraceParse = TRUE;
 int TraceAnalyze = TRUE;
+int TraceCode = TRUE;
 
 int Error = FALSE;
 
@@ -55,9 +56,10 @@ int main(int argc, char * argv[]) {
 	YYSTYPE syntaxTree; /*árvore de sintaxe */
 
 	char inputName[128];
+	char outputName[128];
 
-	if (argc != 2){ /* Verifica se a quantidade de argumentos é válida */
-		fprintf(stderr,"usage: %s <input>\n", argv[0]);
+	if (argc != 3){ /* Verifica se a quantidade de argumentos é válida */
+		fprintf(stderr,"usage: %s <input> <output>\n", argv[0]);
         exit(1);
     }
 
@@ -92,13 +94,19 @@ int main(int argc, char * argv[]) {
 	    	if (TraceAnalyze) fprintf(listing,"\nType Checking Finished\n");
 		}
   	}
-	// code = fopen("output.cmm", "w+"); /* Tenta abrir o arquivo de saída */
-	// if (code == NULL) {
-	// 	fprintf(stderr, "Error at openning file output.cmm\n");
-	// 	exit(1);
-	// }
-	// fclose(code);
-	//st_free();
+#if !NO_CODE
+	if (! Error) {
+
+	    strcpy(outputName, argv[2]);
+	    code = fopen(outputName, "w+");
+	    if (code == NULL){
+			printf("Unable to open %s\n", outputName);
+	      	exit(1);
+	    }
+	    codeGen(syntaxTree, outputName);
+	    fclose(code);
+	  }
+#endif
 #endif
 	freeTree(syntaxTree);
 #endif

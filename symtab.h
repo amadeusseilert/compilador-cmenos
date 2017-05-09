@@ -39,6 +39,8 @@ typedef struct ScopeRec {
 no começo da construção das tabelas de símbolos */
 extern Scope globalScope;
 
+void sc_init( void );
+
 /* Retorna o escopo no topo da pilha de escopos */
 Scope sc_top( void );
 
@@ -51,11 +53,15 @@ int sc_location( void );
 /* Empilha um escopo na pilha */
 void sc_push( Scope scope );
 
+Scope sc_find(char * funcName);
+
 /* Cria um novo escopo a partir de um nome de uma função ou procedimento */
 Scope sc_create(char * funcName);
 
 /* Busca pela posição na memória de um símbolo em todos os escopos */
 int st_lookup (char * name);
+
+int st_lookup_top (char * name);
 
 /* Executa uma busca na tabela por um nome em todos os escopos. Se for
 encontrado, o símbolo é retornado, caso contrário, retorna NULL.*/

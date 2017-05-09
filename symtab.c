@@ -37,6 +37,14 @@ static int hash (char * key) {
 	return temp;
 }
 
+void sc_init( void ){
+	int i;
+	for (i = 0; i < MAX_SCOPE; i++){
+		scopes[i] = NULL;
+		scopeStack[i] = NULL;
+	}
+}
+
 /* Retorna o escopo no topo da pilha de escopos */
 Scope sc_top( void ){
 	return scopeStack[nScopeStack - 1];
@@ -58,14 +66,29 @@ void sc_push( Scope scope ){
   	location[nScopeStack++] = 0;
 }
 
+Scope sc_find(char * funcName){
+	int i;
+	for (i = 0; i < MAX_SCOPE; i++){
+		Scope temp = scopes[i];
+		if (strcmp(temp->name, funcName) == 0)
+			return temp;
+	}
+
+	return NULL;
+}
+
 /* Cria um novo escopo a partir de um nome de uma função ou procedimento */
 Scope sc_create(char * funcName){
+	int i;
 	Scope newScope;
 
   	newScope = (Scope) malloc(sizeof(struct ScopeRec));
   	newScope->name = funcName;
   	newScope->nestedLevel = nScopeStack;
   	newScope->parent = sc_top();
+
+	for (i = 0; i < SIZE; i++)
+		newScope->hashTable[i] = NULL;
 
   	scopes[nScope++] = newScope;
   	return newScope;
@@ -77,6 +100,19 @@ int st_lookup ( char * name ){
   	if (l != NULL)
 		return l->location;
   	return -1;
+}
+
+int st_lookup_top (char * name){
+	int h = hash(name);
+	Scope sc = sc_top();
+	if (sc){
+		BucketList l = sc->hashTable[h];
+		while ((l != NULL) && (strcmp(name,l->node->name) != 0))
+	  		l = l->next;
+		if (l != NULL)
+			return l->location;
+	}
+	return -1;
 }
 
 /* Executa uma busca na tabela por um nome em todos os escopos. Se for

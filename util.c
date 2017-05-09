@@ -182,12 +182,6 @@ void printTree(TreeNode * tree){
         		case WhileK:
           			fprintf(listing, "While\n");
           			break;
-        		case AssignK:
-          			fprintf(listing, "Assign\n");
-          			break;
-				case CallK:
-					fprintf(listing, "Call: %s\n", tree->name);
-					break;
         		case ReturnK:
           			fprintf(listing, "Return\n");
           			break;
@@ -207,6 +201,12 @@ void printTree(TreeNode * tree){
 	        	case IdK:
 	          		fprintf(listing, "Id: %s\n", tree->name);
 	          		break;
+				case AssignK:
+					fprintf(listing, "Assign\n");
+					break;
+				case CallK:
+					fprintf(listing, "Call: %s\n", tree->name);
+					break;
 	        	default:
 	          		fprintf(listing, "Unknown ExpNode kind\n");
 	          		break;

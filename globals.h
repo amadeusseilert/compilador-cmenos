@@ -62,8 +62,8 @@ extern int lineno; /* Contador de linhas para listagem */
 /**************************************************/
 
 typedef enum {StmtK, ExpK, DeclK} NodeKind;
-typedef enum {CmpdK, IfK, WhileK, AssignK, CallK, ReturnK} StmtKind;
-typedef enum {OpK, ConstK, IdK} ExpKind;
+typedef enum {CmpdK, IfK, WhileK, ReturnK} StmtKind;
+typedef enum {OpK, ConstK, IdK, AssignK, CallK} ExpKind;
 typedef enum {VarK, FunK, ParamK} DeclKind;
 
 /* ExpType será usado para análise semântica. Verificação de tipo. */
@@ -133,7 +133,7 @@ extern int TraceAnalyze;
 TraceCode = TRUE faz com que comentários sejam gerados no arquivo code conforme
 o código é gerado.
 */
-//extern int TraceCode;
+extern int TraceCode;
 
 /*
 Error = TRUE todos os erros são reportados ná análise

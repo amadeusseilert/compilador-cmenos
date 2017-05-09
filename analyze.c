@@ -103,10 +103,7 @@ static void insertNode(TreeNode * t){
 				if (temp == NULL){
 					printSemanticError(t, "undeclared variable");
 				}
-			}
-			break;
-		case StmtK:
-			if (t->kind.stmt == CallK) {
+			} else if (t->kind.exp == CallK) {
 				/* Verifica se ocorre uma invocação de uma função que existe */
 				temp = st_bucket(t->name);
 				if (temp == NULL) {
@@ -117,7 +114,10 @@ static void insertNode(TreeNode * t){
 					tipo */
 					t->enclosingFunction = temp->node;
 				}
-			} else if (t->kind.stmt == CmpdK) {
+			}
+			break;
+		case StmtK:
+			 if (t->kind.stmt == CmpdK) {
 				/* Aqui faz a discriminação dos níveis de aninhamento. Se
 				hasFunctionScopeDeclared = TRUE, quer dizer que acabou de sair
 				de um nó de declaração, ou seja, nestedLevel = 1. Caso contrário,
@@ -176,22 +176,6 @@ static void checkNode(TreeNode * t) {
 						printSemanticError(t, "illegal identifier type");
 					}
 					break;
-			}
-		break;
-		case StmtK:
-			/* Nós do tipo statement não precisam ter valor de tipo (exceto
-			call), apenas seus filhos, como é o caso, por exemplo, do nó if, que
-			deve possuir uma expressão do tipo booleana como filho */
-			switch (t->kind.stmt) {
-				case CmpdK:
-					/* Não verifica nada */
-					break;
-				case IfK:
-					/* A expressão dentro do teste do if deve ser do tipo
-					booleano */
-					if (t->child[0]->type != Boolean)
-						printSemanticError(t->child[0], "if test is not Boolean");
-					break;
 				case AssignK:
 					/* Como só é possível a declaração de variáveis do tipo
 					inteiro, a atribuição deve ser dada a uma variável inteira */
@@ -200,12 +184,6 @@ static void checkNode(TreeNode * t) {
 						printSemanticError(t->child[0], "assignment of non-integer value");
 					else
 						t->type = Integer;
-					break;
-				case WhileK:
-					/* A expressão dentro do teste do laço deve ser do tipo
-					booleano */
-					if (t->child[0]->type != Boolean)
-						printSemanticError(t->child[0], "while test is not Boolean");
 					break;
 				case CallK:
 					/* Tipo de retorno da invocação é o mesmo da assinatura da
@@ -223,6 +201,30 @@ static void checkNode(TreeNode * t) {
 						}
 					}
 					break;
+				}
+			break;
+		case StmtK:
+			/* Nós do tipo statement não precisam ter valor de tipo (exceto
+			call), apenas seus filhos, como é o caso, por exemplo, do nó if, que
+			deve possuir uma expressão do tipo booleana como filho */
+			switch (t->kind.stmt) {
+				case CmpdK:
+					/* Não verifica nada */
+					break;
+				case IfK:
+					/* A expressão dentro do teste do if deve ser do tipo
+					booleano */
+					if (t->child[0]->type != Boolean)
+						printSemanticError(t->child[0], "if test is not Boolean");
+					break;
+
+				case WhileK:
+					/* A expressão dentro do teste do laço deve ser do tipo
+					booleano */
+					if (t->child[0]->type != Boolean)
+						printSemanticError(t->child[0], "while test is not Boolean");
+					break;
+
 				case ReturnK:
 					/* Como a varredura é em pós-ordem, os nós internos de um
 					compound_stmt são vasculhadas primeiramente. Deste modo,
@@ -331,6 +333,7 @@ void declarePredefines( ) {
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
 definido pela transversal em pré-ordem. */
 void buildSymtab(TreeNode * syntaxTree) {
+	sc_init();
 	globalScope = sc_create("_GLOBAL_");
   	sc_push(globalScope);
 	declarePredefines();

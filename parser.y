@@ -323,8 +323,8 @@ return_decl : RETURN SEMI
 expression : var ASSIGN expression
 			{
 				$$ = newNode();
-				$$->nodekind = StmtK;
-				$$->kind.stmt = AssignK;
+				$$->nodekind = ExpK;
+				$$->kind.exp = AssignK;
                 $$->child[0] = $1;
                 $$->child[1] = $3;
             }
@@ -479,8 +479,8 @@ call : 		call_id LPAREN args RPAREN
 call_id:	ID
 			{
 				$$ = newNode();
-				$$->nodekind = StmtK;
-				$$->kind.stmt = CallK;
+				$$->nodekind = ExpK;
+				$$->kind.exp = CallK;
 				$$->name = copyString(lastTokenString);
 				$$->idtype = Function;
 				$$->lineno = lineno;
