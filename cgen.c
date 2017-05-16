@@ -34,7 +34,7 @@ static int inFunc = FALSE;
 static int mainLoc = 0;
 
 /* prototype for internal recursive code generator */
-static void cGen (TreeNode * tree, int isAddr);
+static void cGen (TreeNode * tree);
 
 /* Function getBlockOffset returns the offset for
  * temp variables in the block where list is */
@@ -69,7 +69,7 @@ static int getBlockOffset(TreeNode * list) {
 }
 
 /* Procedure genStmt generates code at a statement node */
-static void genStmt( TreeNode * tree, int isAddr){
+static void genStmt( TreeNode * tree){
 	TreeNode * p1, * p2, * p3;
 
   	int loc1, loc2, currentLoc;
@@ -90,7 +90,7 @@ static void genStmt( TreeNode * tree, int isAddr){
 			sc_push(sc_find(tree->enclosingFunction->name));
 
 			/* generate code for body */
-			cGen(p2, isAddr);
+			cGen(p2);
 
 			/* pop scope */
 			sc_pop();
@@ -108,13 +108,13 @@ static void genStmt( TreeNode * tree, int isAddr){
 			p3 = tree->child[2];
 
 			/* generate code for test expression */
-			cGen(p1, isAddr);
+			cGen(p1);
 
 			loc1 = emitSkip(1);
 			emitComment("if: jump to else belongs here");
 
 			/* recurse on then part */
-			cGen(p2, isAddr);
+			cGen(p2);
 
 			loc2 = emitSkip(1);
 			emitComment("if: jump to end belongs here");
@@ -124,7 +124,7 @@ static void genStmt( TreeNode * tree, int isAddr){
 			emitRM_Abs("JEQ", ac, currentLoc, "if: jmp to else");
 			emitRestore();
 			/* recurse on else part */
-			cGen(p3, isAddr);
+			cGen(p3);
 			currentLoc = emitSkip(0);
 			emitBackup(loc2);
 			emitRM_Abs("LDA",pc,currentLoc,"jmp to end");
@@ -141,13 +141,13 @@ static void genStmt( TreeNode * tree, int isAddr){
 	        emitComment("while: jump after body comes back here");
 
 	        /* generate code for test expression */
-	        cGen(p1, isAddr);
+	        cGen(p1);
 
 	        loc2 = emitSkip(1);
 	        emitComment("while: jump to end belongs here");
 
 	        /* generate code for body */
-	        cGen(p2, isAddr);
+	        cGen(p2);
 	        emitRM_Abs("LDA", pc, loc1, "while: jmp back to test");
 	        /* backpatch */
 	        currentLoc = emitSkip(0);
@@ -164,7 +164,7 @@ static void genStmt( TreeNode * tree, int isAddr){
 			p1 = tree->child[0];
 
 			/* generate code for expression */
-			cGen(p1, isAddr);
+			cGen(p1);
 			emitRM("LD", pc, retFO, mp, "return: to caller");
 
 			if (TraceCode) emitComment("<- return");
@@ -190,12 +190,12 @@ static void genExp( TreeNode * tree, int isAddr){
 	  		p2 = tree->child[1];
 
 		  	/* gen code for ac = left arg */
-		  	cGen(p1, isAddr);
+		  	cGen(p1);
 		  	/* gen code to push left operand */
 		  	emitRM("ST", ac, localOffset--, mp, "op: push left");
 
 		  	/* gen code for ac = right operand */
-		  	cGen(p2, isAddr);
+		  	cGen(p2);
 		  	/* now load left operand */
 		  	emitRM("LD", ac1, ++localOffset, mp, "op: load left");
 
@@ -309,20 +309,20 @@ static void genExp( TreeNode * tree, int isAddr){
 
 				/* generate code for index expression */
 				p1 = tree->child[0];
-				cGen(p1, isAddr);
+				cGen(p1);
 				/* gen code to get correct varOffset */
 				emitRM("LD", ac1, ++localOffset, mp, "id: pop base address");
 				emitRO("SUB", ac, ac1, ac, "id: calculate element address with index");
 			} else {
-			/* kind of node is for non-array id */
+				/* kind of node is for non-array id */
 
-			/* generate code for address */
-			if (loc >= 0)
-			  	/* symbol found in current frame */
-				emitRO("ADD", ac, mp, ac, "id: calculate the address");
-			else
-			  	/* symbol found in global scope */
-				emitRO("ADD", ac, gp, ac, "id: calculate the address");
+				/* generate code for address */
+				if (loc >= 0)
+				  	/* symbol found in current frame */
+					emitRO("ADD", ac, mp, ac, "id: calculate the address");
+				else
+				  	/* symbol found in global scope */
+					emitRO("ADD", ac, gp, ac, "id: calculate the address");
 			}
 
 			if (isAddr) {
@@ -341,12 +341,12 @@ static void genExp( TreeNode * tree, int isAddr){
 			p2 = tree->child[1];
 
 			/* generate code for ac = address of lhs */
-			cGen(p1, TRUE);
+			genExp(p1, TRUE);
 			/* generate code to push lhs */
 			emitRM("ST", ac, localOffset--, mp, "assign: push left (address)");
 
 			/* generate code for ac = rhs */
-			cGen(p2, isAddr);
+			cGen(p2);
 			/* now load lhs */
 			emitRM("LD", ac1, ++localOffset, mp, "assign: load left (address)");
 
@@ -365,10 +365,12 @@ static void genExp( TreeNode * tree, int isAddr){
 			/* for each argument */
 			while (p1 != NULL) {
 				/* generate code for argument expression */
-				if (p1->idtype == Array)
-				  	genExp(p1, TRUE);
-				else
-				  	genExp(p1, FALSE);
+				// if (p1->idtype == Array)
+				//   	genExp(p1, TRUE);
+				// else
+				//   	genExp(p1, FALSE);
+
+				cGen(p1);
 
 				/* generate code to push argument value */
 				emitRM("ST", ac, localOffset + initFO - (nArgs++), mp, "call: push argument");
@@ -409,7 +411,7 @@ static void genExp( TreeNode * tree, int isAddr){
 } /* genExp */
 
 /* Procedure genDecl generates code at a declaration node */
-static void genDecl( TreeNode * tree, int isAddr){
+static void genDecl( TreeNode * tree){
 	TreeNode * p1, * p2;
 
   	int loc, loadFuncLoc, jmpLoc, funcBodyLoc, nextDeclLoc;
@@ -455,13 +457,13 @@ static void genDecl( TreeNode * tree, int isAddr){
 		    /* calculate localOffset and nParams */
 		    localOffset = initFO;
 		    nParams = 0;
-		    cGen(p1, isAddr);
+		    cGen(p1);
 
 		    /* generate code for function body */
 		    if (strcmp(tree->name, "main") == 0)
 		      mainLoc = funcBodyLoc;
 
-		    cGen(p2, isAddr);
+		    cGen(p2);
 
 		    /* generate code to load pc with return address */
 		    emitRM("LD", pc, retFO, mp, "func: load pc with return address");
@@ -516,22 +518,22 @@ static void genDecl( TreeNode * tree, int isAddr){
 /* Procedure cGen recursively generates code by
  * tree traversal
  */
-static void cGen( TreeNode * tree, int isAddr ){
+static void cGen( TreeNode * tree){
 	if (tree != NULL) {
 		switch (tree->nodekind) {
       		case StmtK:
-        		genStmt(tree, isAddr);
+        		genStmt(tree);
         		break;
 			case ExpK:
-				genExp(tree, isAddr);
+				genExp(tree, FALSE);
 				break;
 			case DeclK:
-				genDecl(tree, isAddr);
+				genDecl(tree);
 				break;
 			default:
 				break;
 		}
-		cGen(tree->sibling, isAddr);
+		cGen(tree->sibling);
   	}
 }
 
@@ -581,7 +583,7 @@ void codeGen(TreeNode * syntaxTree, char * codefile) {
    	/* push global scope */
    	sc_push(globalScope);
    	/* generate code for TINY program */
-   	cGen(syntaxTree, FALSE);
+   	cGen(syntaxTree);
    	/* pop global scope */
    	sc_pop();
    	/* call main() function */

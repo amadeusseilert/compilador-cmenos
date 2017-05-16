@@ -6,7 +6,7 @@
   2:     ST  0,0(0) 	clear location 0
 * End of standard prelude.
 * -> Function (factorial)
-  4:     ST  1,-2(5) 	func: store the location of func. entry
+  4:     ST  1,0(5) 	func: store the location of func. entry
 * func: unconditional jump to next declaration belongs here
 * func: function body starts here
   3:    LDC  1,6(0) 	func: load function location
@@ -68,7 +68,7 @@
  34:     ST  6,-4(6) 	call: store current mp
  35:    LDA  6,-4(6) 	call: push new frame
  36:    LDA  0,1(7) 	call: save return in ac
- 37:     LD  7,-2(5) 	call: relative jump to function entry
+ 37:     LD  7,0(5) 	call: relative jump to function entry
  38:     LD  6,0(6) 	call: pop current frame
 * <- Call
  39:     LD  1,-3(6) 	op: load left
@@ -83,7 +83,7 @@
   5:    LDA  7,37(7) 	func: unconditional jump to next declaration
 * -> Function (factorial)
 * -> Function (main)
- 44:     ST  1,-3(5) 	func: store the location of func. entry
+ 44:     ST  1,-1(5) 	func: store the location of func. entry
 * func: unconditional jump to next declaration belongs here
 * func: function body starts here
  43:    LDC  1,46(0) 	func: load function location
@@ -119,7 +119,7 @@
  62:     ST  6,-4(6) 	call: store current mp
  63:    LDA  6,-4(6) 	call: push new frame
  64:    LDA  0,1(7) 	call: save return in ac
- 65:     LD  7,-2(5) 	call: relative jump to function entry
+ 65:     LD  7,0(5) 	call: relative jump to function entry
  66:     LD  6,0(6) 	call: pop current frame
 * <- Call
  67:     LD  1,-3(6) 	assign: load left (address)

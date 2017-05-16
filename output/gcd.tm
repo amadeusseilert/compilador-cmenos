@@ -6,7 +6,7 @@
   2:     ST  0,0(0) 	clear location 0
 * End of standard prelude.
 * -> Function (gcd)
-  4:     ST  1,-2(5) 	func: store the location of func. entry
+  4:     ST  1,0(5) 	func: store the location of func. entry
 * func: unconditional jump to next declaration belongs here
 * func: function body starts here
   3:    LDC  1,6(0) 	func: load function location
@@ -94,7 +94,7 @@
  50:     ST  6,-4(6) 	call: store current mp
  51:    LDA  6,-4(6) 	call: push new frame
  52:    LDA  0,1(7) 	call: save return in ac
- 53:     LD  7,-2(5) 	call: relative jump to function entry
+ 53:     LD  7,0(5) 	call: relative jump to function entry
  54:     LD  6,0(6) 	call: pop current frame
 * <- Call
  55:     LD  7,-1(6) 	return: to caller
@@ -106,7 +106,7 @@
   5:    LDA  7,51(7) 	func: unconditional jump to next declaration
 * -> Function (gcd)
 * -> Function (main)
- 58:     ST  1,-3(5) 	func: store the location of func. entry
+ 58:     ST  1,-1(5) 	func: store the location of func. entry
 * func: unconditional jump to next declaration belongs here
 * func: function body starts here
  57:    LDC  1,60(0) 	func: load function location
@@ -155,7 +155,7 @@
  83:     ST  6,-4(6) 	call: store current mp
  84:    LDA  6,-4(6) 	call: push new frame
  85:    LDA  0,1(7) 	call: save return in ac
- 86:     LD  7,-2(5) 	call: relative jump to function entry
+ 86:     LD  7,0(5) 	call: relative jump to function entry
  87:     LD  6,0(6) 	call: pop current frame
 * <- Call
  88:     ST  0,-6(6) 	call: push argument

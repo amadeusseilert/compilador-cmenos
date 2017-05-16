@@ -326,8 +326,8 @@ void declarePredefines( ) {
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
-	st_insert(inputNode, sc_location());
-	st_insert(outputNode, sc_location());
+	st_insert(inputNode, -1);
+	st_insert(outputNode, -1);
 }
 
 /* Procedimento que constroi a tabela de símbolos. O percurso na árvore é
