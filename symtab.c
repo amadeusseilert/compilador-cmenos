@@ -56,8 +56,10 @@ void sc_pop( void ){
 }
 
 /* Retorna a localização mais alta do escopo no topo da pilha */
-int sc_location( void ){
-  	return location[nScopeStack - 1]++;
+int sc_location( int size ){
+	int nextLoc = location[nScopeStack - 1];
+	location[nScopeStack - 1] += size;
+  	return nextLoc;
 }
 
 /* Empilha um escopo na pilha */

@@ -61,6 +61,10 @@ static int checkCallArguments (TreeNode * callNode, TreeNode * functionNode) {
 		verificar os tipos */
 		if (arg->type != param->type)
 			return FALSE;
+
+		if (param->idtype == Array)
+			arg->idtype = Array;
+
 		arg = arg->sibling;
 		param = param->sibling;
 	}
@@ -82,16 +86,22 @@ static void insertNode(TreeNode * t){
 				com o mesmo nome e mesmo escopo anteriormente */
 				printSemanticError(t, "duplicate identifier declared");
 			} else {
-				st_insert(t, sc_location());
-				/* Verifica se o tipo de declaração é uma função ou procedimento */
-				if (t->kind.decl == FunK){
-					/* Cria um novo escopo no primeiro nível de aninhamento */
-					sc_push(sc_create(t->name));
-					hasFunctionScopeDeclared = TRUE;
-					/* Verifica se ocorreu a declaração da função main*/
-					if (hasMain == FALSE && strcmp(t->name, "main") == 0)
-						hasMain = TRUE;
+
+				if (t->kind.decl == VarK && t->idtype == Array )
+					st_insert(t, sc_location(t->val));
+				else {
+					st_insert(t, sc_location(1));
+					/* Verifica se o tipo de declaração é uma função ou procedimento */
+					if (t->kind.decl == FunK){
+						/* Cria um novo escopo no primeiro nível de aninhamento */
+						sc_push(sc_create(t->name));
+						hasFunctionScopeDeclared = TRUE;
+						/* Verifica se ocorreu a declaração da função main*/
+						if (hasMain == FALSE && strcmp(t->name, "main") == 0)
+							hasMain = TRUE;
+					}
 				}
+
 			}
 			break;
 		case ExpK:
@@ -184,6 +194,7 @@ static void checkNode(TreeNode * t) {
 						printSemanticError(t->child[0], "assignment of non-integer value");
 					else
 						t->type = Integer;
+
 					break;
 				case CallK:
 					/* Tipo de retorno da invocação é o mesmo da assinatura da

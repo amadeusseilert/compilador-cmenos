@@ -86,7 +86,7 @@ typedef struct treeNode {
 	} kind; // tipo do tipo do nó
 
 	TokenType op; // caso o nó for do tipo OpK, armazena a operação
-	int val; // caso o nó for um vetor ou constante, armazena o valor
+	int val; // caso o nó for um vetor ou constante, armazena o tamanho ou valor
     char * name; // caso o nó for um identificador, armazena o nome
     Type type; // armazena a classificação de valor do nó
 	IdType idtype; // caso o nó for um identificador

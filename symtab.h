@@ -48,7 +48,7 @@ Scope sc_top( void );
 void sc_pop( void );
 
 /* Retorna a localização mais alta do escopo no topo da pilha */
-int sc_location( void );
+int sc_location( int size );
 
 /* Empilha um escopo na pilha */
 void sc_push( Scope scope );

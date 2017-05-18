@@ -104,7 +104,7 @@
 * <- compound
  56:     LD  7,-1(6) 	func: load pc with return address
   5:    LDA  7,51(7) 	func: unconditional jump to next declaration
-* -> Function (gcd)
+* <- Function (gcd)
 * -> Function (main)
  58:     ST  1,-1(5) 	func: store the location of func. entry
 * func: unconditional jump to next declaration belongs here
@@ -116,64 +116,62 @@
 * -> Id (x)
  61:    LDC  0,-2(0) 	id: load varOffset
  62:    ADD  0,6,0 	id: calculate the address
- 63:    LDA  0,0(0) 	load id address
 * <- Id
- 64:     ST  0,-4(6) 	assign: push left (address)
+ 63:     ST  0,-4(6) 	assign: push left (address)
 * -> Call
- 65:     IN  0,0,0 	read integer value
+ 64:     IN  0,0,0 	read integer value
 * <- Call
- 66:     LD  1,-4(6) 	assign: load left (address)
- 67:     ST  0,0(1) 	assign: store value
+ 65:     LD  1,-4(6) 	assign: load left (address)
+ 66:     ST  0,0(1) 	assign: store value
 * <- assign
 * -> assign
 * -> Id (y)
- 68:    LDC  0,-3(0) 	id: load varOffset
- 69:    ADD  0,6,0 	id: calculate the address
- 70:    LDA  0,0(0) 	load id address
+ 67:    LDC  0,-3(0) 	id: load varOffset
+ 68:    ADD  0,6,0 	id: calculate the address
 * <- Id
- 71:     ST  0,-4(6) 	assign: push left (address)
+ 69:     ST  0,-4(6) 	assign: push left (address)
 * -> Call
- 72:     IN  0,0,0 	read integer value
+ 70:     IN  0,0,0 	read integer value
 * <- Call
- 73:     LD  1,-4(6) 	assign: load left (address)
- 74:     ST  0,0(1) 	assign: store value
+ 71:     LD  1,-4(6) 	assign: load left (address)
+ 72:     ST  0,0(1) 	assign: store value
 * <- assign
 * -> Call
 * -> Call
 * -> Id (x)
- 75:    LDC  0,-2(0) 	id: load varOffset
- 76:    ADD  0,6,0 	id: calculate the address
- 77:     LD  0,0(0) 	load id value
+ 73:    LDC  0,-2(0) 	id: load varOffset
+ 74:    ADD  0,6,0 	id: calculate the address
+ 75:     LD  0,0(0) 	load id value
 * <- Id
- 78:     ST  0,-6(6) 	call: push argument
+ 76:     ST  0,-6(6) 	call: push argument
 * -> Id (y)
- 79:    LDC  0,-3(0) 	id: load varOffset
- 80:    ADD  0,6,0 	id: calculate the address
- 81:     LD  0,0(0) 	load id value
+ 77:    LDC  0,-3(0) 	id: load varOffset
+ 78:    ADD  0,6,0 	id: calculate the address
+ 79:     LD  0,0(0) 	load id value
 * <- Id
- 82:     ST  0,-7(6) 	call: push argument
- 83:     ST  6,-4(6) 	call: store current mp
- 84:    LDA  6,-4(6) 	call: push new frame
- 85:    LDA  0,1(7) 	call: save return in ac
- 86:     LD  7,0(5) 	call: relative jump to function entry
- 87:     LD  6,0(6) 	call: pop current frame
+ 80:     ST  0,-7(6) 	call: push argument
+ 81:     ST  6,-4(6) 	call: store current mp
+ 82:    LDA  6,-4(6) 	call: push new frame
+ 83:    LDA  0,1(7) 	call: save return in ac
+ 84:     LD  7,0(5) 	call: relative jump to function entry
+ 85:     LD  6,0(6) 	call: pop current frame
 * <- Call
- 88:     ST  0,-6(6) 	call: push argument
- 89:     LD  0,-6(6) 	load arg to ac
- 90:    OUT  0,0,0 	write ac
+ 86:     ST  0,-6(6) 	call: push argument
+ 87:     LD  0,-6(6) 	load arg to ac
+ 88:    OUT  0,0,0 	write ac
 * <- Call
 * <- compound
- 91:     LD  7,-1(6) 	func: load pc with return address
- 59:    LDA  7,32(7) 	func: unconditional jump to next declaration
-* -> Function (main)
- 92:    LDC  0,-2(0) 	init: load globalOffset
- 93:    ADD  6,6,0 	init: initialize mp with globalOffset
+ 89:     LD  7,-1(6) 	func: load pc with return address
+ 59:    LDA  7,30(7) 	func: unconditional jump to next declaration
+* <- Function (main)
+ 90:    LDC  0,-2(0) 	init: load globalOffset
+ 91:    ADD  6,6,0 	init: initialize mp with globalOffset
 * -> Call
- 94:     ST  6,0(6) 	call: store current mp
- 95:    LDA  6,0(6) 	call: push new frame
- 96:    LDA  0,1(7) 	call: save return in ac
- 97:    LDC  7,60(0) 	call: unconditional jump to main() entry
- 98:     LD  6,0(6) 	call: pop current frame
+ 92:     ST  6,0(6) 	call: store current mp
+ 93:    LDA  6,0(6) 	call: push new frame
+ 94:    LDA  0,1(7) 	call: save return in ac
+ 95:    LDC  7,60(0) 	call: unconditional jump to main() entry
+ 96:     LD  6,0(6) 	call: pop current frame
 * <- Call
 * End of execution.
- 99:   HALT  0,0,0 	
+ 97:   HALT  0,0,0 	

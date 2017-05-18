@@ -1,6 +1,6 @@
-/* Um programa que faz a ordenação em um vetor de 10 elementos */
+/* Um programa que faz a ordenação em um vetor de 5 elementos */
 
-int x[ 10 ];
+int x[ 5 ];
 
 int minloc ( int a[], int low, int high ) {
 	int i; int x; int k;
@@ -34,11 +34,11 @@ void sort( int a[], int low, int high ) {
 void main( void ) {
 	int i;
 	i = 0;
-	while( i < 10 ) {
+	while( i < 5 ) {
 		x[ i ] = input();
 		i = i + 1;
 	}
-	sort( x, 0, 10 );
+	sort( x, 0, 5 );
 	i = 0;
 	while( i < 5 ) {
 		output( x[ i ] );

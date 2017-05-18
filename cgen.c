@@ -178,6 +178,8 @@ static void genStmt( TreeNode * tree){
 static void genExp( TreeNode * tree, int isAddr){
 	TreeNode * p1, * p2;
 
+	BucketList symTemp;
+
 	int loc;
   	int varOffset;
 	int nArgs;
@@ -284,7 +286,7 @@ static void genExp( TreeNode * tree, int isAddr){
 			/* generate code to load varOffset */
 			emitRM("LDC", ac, varOffset, 0, "id: load varOffset");
 
-			if (tree->idtype == Array) {
+			if (tree->idtype == Array && tree->child[0] != NULL) {
 				/* kind of node is for array id */
 
 				if (loc >= 0 && loc < nParams) {
@@ -309,7 +311,7 @@ static void genExp( TreeNode * tree, int isAddr){
 
 				/* generate code for index expression */
 				p1 = tree->child[0];
-				cGen(p1);
+				genExp(p1, FALSE);
 				/* gen code to get correct varOffset */
 				emitRM("LD", ac1, ++localOffset, mp, "id: pop base address");
 				emitRO("SUB", ac, ac1, ac, "id: calculate element address with index");
@@ -325,7 +327,13 @@ static void genExp( TreeNode * tree, int isAddr){
 					emitRO("ADD", ac, gp, ac, "id: calculate the address");
 			}
 
-			if (isAddr) {
+			symTemp = st_bucket_top(tree->name);
+
+			if (symTemp != NULL && isAddr){
+				if (symTemp->node->kind.decl == ParamK && tree->idtype == Array && tree->child[0] == NULL){
+					emitRM("LD", ac, 0, ac, "load id address value");
+				}
+			} else if (isAddr) {
 				emitRM("LDA", ac, 0, ac, "load id address");
 			} else {
 				emitRM("LD", ac, 0, ac, "load id value");
@@ -364,13 +372,12 @@ static void genExp( TreeNode * tree, int isAddr){
 
 			/* for each argument */
 			while (p1 != NULL) {
-				/* generate code for argument expression */
-				// if (p1->idtype == Array)
-				//   	genExp(p1, TRUE);
-				// else
-				//   	genExp(p1, FALSE);
 
-				cGen(p1);
+				if (p1->idtype == Array && p1->child[0] == NULL){
+					genExp(p1, TRUE);
+				} else  {
+					genExp(p1, FALSE);
+				}
 
 				/* generate code to push argument value */
 				emitRM("ST", ac, localOffset + initFO - (nArgs++), mp, "call: push argument");
@@ -478,7 +485,7 @@ static void genDecl( TreeNode * tree){
 		    inFunc = FALSE;
 
 		    if (TraceCode) {
-		      	sprintf(buffer, "-> Function (%s)", tree->name);
+		      	sprintf(buffer, "<- Function (%s)", tree->name);
 		      	emitComment(buffer);
 		    }
 
