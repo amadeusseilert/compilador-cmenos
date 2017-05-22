@@ -280,11 +280,14 @@ static void checkNode(TreeNode * t) {
 	}
 }
 
-/* */
+/* Procedimento que faz o desempilhamento da pilha de escopos. Deve ser
+invocado em pós ordem no método tranverse */
 static void afterInsertNode( TreeNode * t ) {
 	switch (t->nodekind){
 		case StmtK:
 	      	switch (t->kind.stmt){
+				/* Como será em pós ordem, toda vez que "sair" de um composto,
+				desempilha o escopo */
 				case CmpdK:
 	          		sc_pop();
 	          		break;
@@ -337,6 +340,9 @@ void declarePredefines( ) {
     outputNode->idtype = Function;
     outputNode->child[0] = temp;
 
+	/* AS funções embutidas não ocuparão um espaço de memória efetivamente,
+	pois elas possuem um comportamento pré definido. Isso implica que não é
+	necessário deslocar o contador de símbolos */
 	st_insert(inputNode, -1);
 	st_insert(outputNode, -1);
 }

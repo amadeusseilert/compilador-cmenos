@@ -39,6 +39,7 @@ typedef struct ScopeRec {
 no começo da construção das tabelas de símbolos */
 extern Scope globalScope;
 
+/* Inicializa todo o vetor de escopos e a pilha de escopos */
 void sc_init( void );
 
 /* Retorna o escopo no topo da pilha de escopos */
@@ -53,6 +54,8 @@ int sc_location( int size );
 /* Empilha um escopo na pilha */
 void sc_push( Scope scope );
 
+/* Itera sobre o vetor de todos os escopos, retorna a primeira ocorrência
+de acordo com o nome do escopo. OBS: Não discrimina nível de aninhamento */
 Scope sc_find(char * funcName);
 
 /* Cria um novo escopo a partir de um nome de uma função ou procedimento */

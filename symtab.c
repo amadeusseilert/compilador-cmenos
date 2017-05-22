@@ -37,6 +37,7 @@ static int hash (char * key) {
 	return temp;
 }
 
+/* Inicializa todo o vetor de escopos e a pilha de escopos */
 void sc_init( void ){
 	int i;
 	for (i = 0; i < MAX_SCOPE; i++){
@@ -68,6 +69,8 @@ void sc_push( Scope scope ){
   	location[nScopeStack++] = 0;
 }
 
+/* Itera sobre o vetor de todos os escopos, retorna a primeira ocorrência
+de acordo com o nome do escopo. OBS: Não discrimina nível de aninhamento */
 Scope sc_find(char * funcName){
 	int i;
 	for (i = 0; i < MAX_SCOPE; i++){

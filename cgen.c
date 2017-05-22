@@ -1,43 +1,48 @@
 /****************************************************/
-/* File: cgen.c                                     */
-/* The code generator implementation                */
-/* for the TINY compiler                            */
-/* (generates code for the TM machine)              */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Autor: Amadeus T. Seilert						*/
+/* Arquivo: cgen.c		                            */
+/* Implementação dos procedimentos que farão		*/
+/* a geração de código a partir dos dados contidos	*/
+/* na árvore de análise sintática.					*/
 /****************************************************/
-
 #include "globals.h"
 #include "symtab.h"
 #include "code.h"
 #include "cgen.h"
 
+/* Armazena uma string temporária para a impressão de comentários */
 static char buffer[1000];
 
-#define ofpFO 0
-#define retFO -1
-#define initFO -2
-
+/* Deslocamento de utilização do escopo global. Toda declaração de uma variável
+ou função global, implica no incremento deste valor */
 static int globalOffset = 0;
+/* Ideia semelhante ao globalOffset, porém, este valor é sempre inicializado em
+cada escopo */
 static int localOffset = initFO;
 
-/* nParams is the number of parameters in current frame */
+/* Número de parâmetros dentro do frame corrente */
 static int nParams = 0;
 
 /* inFunc is the flag that shows if current node
    is in a function block. This flag is used when
    calculating localOffset of a function declaration.
 */
+
+/* Indica se o nó corrente na geração de código está dentro de um bloco de
+função. Esta vairável será usada para calcular o localOffset */
 static int inFunc = FALSE;
 
-/* mainLoc is the location of main() function */
+/* Local da função main */
 static int mainLoc = 0;
 
-/* prototype for internal recursive code generator */
+/* Protótipo da recursão interna da geração de código */
 static void cGen (TreeNode * tree);
 
 /* Function getBlockOffset returns the offset for
  * temp variables in the block where list is */
+
+/* Função que determina o valor de deslocamento das variáveis internas ao bloco
+list. Parametros também incrementam o deslocamento */
 static int getBlockOffset(TreeNode * list) {
 	int offset = 0;
 
@@ -47,6 +52,8 @@ static int getBlockOffset(TreeNode * list) {
 			while (node != NULL) {
 				switch (node->kind.decl) {
 					case VarK:
+						/* Caso a variável for um vetor, o deslocamento é o
+						tamanho dele */
 						if (node->idtype == Array) {
 							offset += node->val;
 						} else {
@@ -54,6 +61,9 @@ static int getBlockOffset(TreeNode * list) {
 						}
 						break;
 					case ParamK:
+						/* O deslocamento de parametros é sempre unitário. Em
+						caso de um parâmetro vetor, o parâmetro representará uma
+						posição na memória, ou seja, um endereço de memória */
 						++offset;
 						break;
 					default:
@@ -68,7 +78,7 @@ static int getBlockOffset(TreeNode * list) {
 	return offset;
 }
 
-/* Procedure genStmt generates code at a statement node */
+/* Procedimento que gera código para nós do tipo Stament */
 static void genStmt( TreeNode * tree){
 	TreeNode * p1, * p2, * p3;
 
@@ -79,23 +89,23 @@ static void genStmt( TreeNode * tree){
 		case CmpdK:
 			if (TraceCode) emitComment("-> compound");
 
-			p1 = tree->child[0];
-			p2 = tree->child[1];
+			p1 = tree->child[0]; /* Declarações */
+			p2 = tree->child[1]; /* Lista de expressões e statements */
 
-			/* update localOffset with the offset derived from declarations */
+			/* Atualiza localOffset a partir das declarações do bloco */
 			offset = getBlockOffset(p1);
 			localOffset -= offset;
 
-			/* push scope */
+			/* Carrega o escopo da função corrente */
 			sc_push(sc_find(tree->enclosingFunction->name));
 
-			/* generate code for body */
+			/* Gera o código do corpo */
 			cGen(p2);
 
-			/* pop scope */
+			/* Desempilha o escopo */
 			sc_pop();
 
-			/* restore localOffset */
+			/* Restaura localOffset */
 			localOffset -= offset;
 
 			if (TraceCode) emitComment("<- compound");
@@ -107,13 +117,13 @@ static void genStmt( TreeNode * tree){
 			p2 = tree->child[1];
 			p3 = tree->child[2];
 
-			/* generate code for test expression */
+			/* Gera código para a parte do teste booleano */
 			cGen(p1);
 
 			loc1 = emitSkip(1);
 			emitComment("if: jump to else belongs here");
 
-			/* recurse on then part */
+			/* Gera código da parte "então" */
 			cGen(p2);
 
 			loc2 = emitSkip(1);
@@ -123,7 +133,8 @@ static void genStmt( TreeNode * tree){
 			emitBackup(loc1);
 			emitRM_Abs("JEQ", ac, currentLoc, "if: jmp to else");
 			emitRestore();
-			/* recurse on else part */
+
+			/* Gera código da parte "else" */
 			cGen(p3);
 			currentLoc = emitSkip(0);
 			emitBackup(loc2);
@@ -140,16 +151,17 @@ static void genStmt( TreeNode * tree){
 	        loc1 = emitSkip(0);
 	        emitComment("while: jump after body comes back here");
 
-	        /* generate code for test expression */
+			/* Gera código para a parte do teste booleano */
 	        cGen(p1);
 
 	        loc2 = emitSkip(1);
 	        emitComment("while: jump to end belongs here");
 
-	        /* generate code for body */
+	        /* Gera código para o corpo */
 	        cGen(p2);
 	        emitRM_Abs("LDA", pc, loc1, "while: jmp back to test");
-	        /* backpatch */
+
+	        /* Ponto de retorno */
 	        currentLoc = emitSkip(0);
 	        emitBackup(loc2);
 	        emitRM_Abs("JEQ", ac, currentLoc, "while: jmp to end");
@@ -163,7 +175,7 @@ static void genStmt( TreeNode * tree){
 
 			p1 = tree->child[0];
 
-			/* generate code for expression */
+			/* Gera código para a expressão */
 			cGen(p1);
 			emitRM("LD", pc, retFO, mp, "return: to caller");
 
@@ -172,12 +184,14 @@ static void genStmt( TreeNode * tree){
 		default:
 			break;
 	}
-} /* genStmt */
+}
 
-/* Procedure genExp generates code at an expression node */
+/* Procedimento que gera código para nós do tipo Expressão. isAddr define se
+deve ser considerado como manuseio em endereço de memória */
 static void genExp( TreeNode * tree, int isAddr){
 	TreeNode * p1, * p2;
 
+	/* Usado para verificar se o argumento de uma invocação é vetor */
 	BucketList symTemp;
 
 	int loc;
@@ -191,14 +205,14 @@ static void genExp( TreeNode * tree, int isAddr){
 	  		p1 = tree->child[0];
 	  		p2 = tree->child[1];
 
-		  	/* gen code for ac = left arg */
+			/* Gera código para a parte esquerda da operação */
 		  	cGen(p1);
-		  	/* gen code to push left operand */
+			/* Salva o operando esquerdo */
 		  	emitRM("ST", ac, localOffset--, mp, "op: push left");
 
-		  	/* gen code for ac = right operand */
+		  	/* Gera código para a parte direita da operação */
 		  	cGen(p2);
-		  	/* now load left operand */
+		  	/* Carrega o operando esquerdo */
 		  	emitRM("LD", ac1, ++localOffset, mp, "op: load left");
 
 	  		switch (tree->op) {
@@ -259,17 +273,17 @@ static void genExp( TreeNode * tree, int isAddr){
 				default:
 					emitComment("BUG: Unknown operator");
 					break;
-			} /* case op */
+			}
 
 			if (TraceCode)  emitComment("<- Op");
-			break; /* OpK */
+			break;
 
 		case ConstK:
 			if (TraceCode) emitComment("-> Const") ;
-			/* gen code to load integer constant using LDC */
+			/* Carrega o valor de uma constante no acumulador */
 			emitRM("LDC", ac, tree->val, 0, "load const");
 			if (TraceCode)  emitComment("<- Const") ;
-			break; /* ConstK */
+			break;
 
 		case IdK:
 			if (TraceCode) {
@@ -277,17 +291,20 @@ static void genExp( TreeNode * tree, int isAddr){
 			  emitComment(buffer);
 			}
 
+			/* Busca a localização do identificador no escopo local. Caso não
+			encontrar, o identificador é global */
 			loc = st_lookup_top(tree->name);
 			if (loc >= 0)
 				varOffset = initFO - loc;
 			else
 				varOffset = -(st_lookup(tree->name));
 
-			/* generate code to load varOffset */
+			/* Gera uma constante que representa o valor de deslocamento da
+			variável */
 			emitRM("LDC", ac, varOffset, 0, "id: load varOffset");
 
 			if (tree->idtype == Array && tree->child[0] != NULL) {
-				/* kind of node is for array id */
+				/* O nó corrente é um vetor. Verifica  */
 
 				if (loc >= 0 && loc < nParams) {
 
@@ -566,30 +583,25 @@ void genMainCall() {
 	if (TraceCode) emitComment("<- Call");
 }
 
-/**********************************************/
-/* the primary function of the code generator */
-/**********************************************/
-/* Procedure codeGen generates code to a code
- * file by traversal of the syntax tree. The
- * second parameter (codefile) is the file name
- * of the code file, and is used to print the
- * file name as a comment in the code file
- */
+/* Procedimento que gera código a partir da árvore de sintaxe transversalmente.
+Também é passado como parâmetro o nome do arquivo que será impresso o código
+gerado. */
 void codeGen(TreeNode * syntaxTree, char * codefile) {
+	/* Gera comentários iniciais */
 	char * s = malloc(strlen(codefile) + 7);
    	strcpy(s, "File: ");
    	strcat(s, codefile);
    	emitComment("C- Compilation to TM Code");
    	emitComment(s);
-   	/* generate standard prelude */
+   	/* Gera instruções que inicializam os registradores */
    	emitComment("Standard prelude:");
    	emitRM("LD", gp, 0, ac, "load gp with maxaddress");
    	emitRM("LDA", mp, 0, gp, "copy gp to mp");
    	emitRM("ST", ac, 0, ac, "clear location 0");
    	emitComment("End of standard prelude.");
-   	/* push global scope */
+   	/* Carrega o escopo global */
    	sc_push(globalScope);
-   	/* generate code for TINY program */
+   	/* Gera código para a máquina virtual */
    	cGen(syntaxTree);
    	/* pop global scope */
    	sc_pop();
