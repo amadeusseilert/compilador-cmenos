@@ -97,15 +97,6 @@ typedef struct treeNode {
 /**************************************************/
 
 /*
-Esta flag define se ocorrerá a depuração do processo de análise sintática  pelo
-Bison. É impresso no stdout a sequencia de estados da árvore e ações tomadas
-ao longo do reconhecimento de regras.
-
-http://dinosaur.compilertools.net/bison/bison_11.html
-*/
-#define DEBUG_PARSE 0
-
-/*
 EchoSource = TRUE faz com que o arquivo de entrada seja impresso no arquivo
 listing com a numeração de linhas durante a análise sintática.
 */

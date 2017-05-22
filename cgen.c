@@ -23,11 +23,6 @@ static int localOffset = initFO;
 /* Número de parâmetros dentro do frame corrente */
 static int nParams = 0;
 
-/* inFunc is the flag that shows if current node
-   is in a function block. This flag is used when
-   calculating localOffset of a function declaration.
-*/
-
 /* Indica se o nó corrente na geração de código está dentro de um bloco de
 função. Esta vairável será usada para calcular o localOffset */
 static int inFunc = FALSE;
@@ -37,9 +32,6 @@ static int mainLoc = 0;
 
 /* Protótipo da recursão interna da geração de código */
 static void cGen (TreeNode * tree);
-
-/* Function getBlockOffset returns the offset for
- * temp variables in the block where list is */
 
 /* Função que determina o valor de deslocamento das variáveis internas ao bloco
 list. Parametros também incrementam o deslocamento */
@@ -304,49 +296,52 @@ static void genExp( TreeNode * tree, int isAddr){
 			emitRM("LDC", ac, varOffset, 0, "id: load varOffset");
 
 			if (tree->idtype == Array && tree->child[0] != NULL) {
-				/* O nó corrente é um vetor. Verifica  */
+				/* O nó corrente é um vetor, mas existe uma subscrição por
+				indexação do tipo a[i]. Verifica se 'a' é parâmetro */
 
 				if (loc >= 0 && loc < nParams) {
 
-				  /* generate code to push address */
+				  /* Gera o código para empilhar o endereço */
 				  emitRO("ADD", ac, mp, ac, "id: load the memory address of base address of array to ac");
 				  emitRO("LD", ac, 0, ac, "id: load the base address of array to ac");
 				} else {
-				 	/* global or local variable */
+				 	/* Variável global ou local */
 
-				  	/* generate code for address */
+				  	/* Gera código para endereço */
 				  	if (loc >= 0)
-				    	/* symbol found in current frame */
+				    	/* Variável local */
 				    	emitRO("ADD", ac, mp, ac, "id: calculate the address");
 				  	else
-					    /* symbol found in global scope */
+					    /* Variável global */
 					    emitRO("ADD", ac, gp, ac, "id: calculate the address");
 				}
 
-				/* generate code to push localOffset */
+				/* Gera código para empilhar localOffset */
 				emitRM("ST", ac, localOffset--, mp, "id: push base address");
 
-				/* generate code for index expression */
+				/* Gera código para a expressão de indexação */
 				p1 = tree->child[0];
 				genExp(p1, FALSE);
-				/* gen code to get correct varOffset */
+				/* Gera código para obter o valor na posição do índice */
 				emitRM("LD", ac1, ++localOffset, mp, "id: pop base address");
 				emitRO("SUB", ac, ac1, ac, "id: calculate element address with index");
 			} else {
-				/* kind of node is for non-array id */
+				/* O nó não é subscrição, gera código para calcular o
+				endereço do identificador */
 
-				/* generate code for address */
 				if (loc >= 0)
-				  	/* symbol found in current frame */
+				  	/* Variável local */
 					emitRO("ADD", ac, mp, ac, "id: calculate the address");
 				else
-				  	/* symbol found in global scope */
+				  	/* Variável global */
 					emitRO("ADD", ac, gp, ac, "id: calculate the address");
 			}
 
+			/* Verifica se o identificador está presente no escopo */
 			symTemp = st_bucket_top(tree->name);
 
 			if (symTemp != NULL && isAddr){
+				/* Verifica se o identificador é um parâmetro do tipo vetor */
 				if (symTemp->node->kind.decl == ParamK && tree->idtype == Array && tree->child[0] == NULL){
 					emitRM("LD", ac, 0, ac, "load id address value");
 				}
@@ -358,72 +353,76 @@ static void genExp( TreeNode * tree, int isAddr){
 
 			if (TraceCode)  emitComment("<- Id");
 
-			break; /* IdK */
+			break;
 		case AssignK:
 			if (TraceCode) emitComment("-> assign");
 
 			p1 = tree->child[0];
 			p2 = tree->child[1];
 
-			/* generate code for ac = address of lhs */
+			/* Gera código para a parte esquerda da atribuição */
 			genExp(p1, TRUE);
-			/* generate code to push lhs */
+			/* Gera códido para empilhar a parte esquerda */
 			emitRM("ST", ac, localOffset--, mp, "assign: push left (address)");
 
-			/* generate code for ac = rhs */
+			/* Gera código para a parte direita da atribuição */
 			cGen(p2);
-			/* now load lhs */
+			/* Gera códido para carregar a parte direita */
 			emitRM("LD", ac1, ++localOffset, mp, "assign: load left (address)");
 
 			emitRM("ST", ac, 0, ac1, "assign: store value");
 
 			if (TraceCode) emitComment("<- assign");
-			break; /* assign_k */
+			break;
 		case CallK:
 			if (TraceCode) emitComment("-> Call");
 
-			/* init */
+			/* Quantidade de argumentos na invocação */
 			nArgs = 0;
 
 			p1 = tree->child[0];
 
-			/* for each argument */
+			/* Para cada argumento, verifica se é referencia de um vetor. */
 			while (p1 != NULL) {
 
 				if (p1->idtype == Array && p1->child[0] == NULL){
+					/* Como é uma referência de vetor, deve ser considerado o
+					carregamento do endereço do identificador */
 					genExp(p1, TRUE);
 				} else  {
 					genExp(p1, FALSE);
 				}
 
-				/* generate code to push argument value */
+				/* Gera código para carregar o valor do argumento */
 				emitRM("ST", ac, localOffset + initFO - (nArgs++), mp, "call: push argument");
 
 				p1 = p1->sibling;
 			}
 
 			if (strcmp(tree->name, "input") == 0) {
-				/* generate code for input() function */
+				/* Gera código para a função input */
 				emitRO("IN",ac,0,0,"read integer value");
 			} else if (strcmp(tree->name, "output") == 0) {
-				/* generate code for output(arg) function */
-				/* generate code for value to write */
+				/* Gera código para a função output */
+				/* Carrega valor de argumento */
 				emitRM("LD", ac, localOffset + initFO, mp, "load arg to ac");
-				/* now output it */
+				/* Imprime */
 				emitRO("OUT", ac, 0, 0, "write ac");
 			} else {
-				/* generate code to store current mp */
+				/* Código de uma função do usuário */
+				/* Gera código para guardar o mp corrente */
 				emitRM("ST", mp, localOffset + ofpFO, mp, "call: store current mp");
-				/* generate code to push new frame */
+				/* Gera código para empilhar um novo frame de função */
 				emitRM("LDA", mp, localOffset, mp, "call: push new frame");
-				/* generate code to save return in ac */
+				/* Gera código para salvar o retorno no acumulador (ac) */
 				emitRM("LDA", ac, 1, pc, "call: save return in ac");
 
-				/* generate code to relative-jump to function entry */
+				/* Gera código para executar um jump relativo a posição de
+				entrada da função */
 				loc = -(st_lookup(tree->name));
 				emitRM("LD", pc, loc, gp, "call: relative jump to function entry");
 
-				/* generate code to pop current frame */
+				/* Gera o código para desempilhar o frama da função */
 				emitRM("LD", mp, ofpFO, mp, "call: pop current frame");
 			}
 
@@ -432,9 +431,9 @@ static void genExp( TreeNode * tree, int isAddr){
 		default:
 			break;
 	}
-} /* genExp */
+}
 
-/* Procedure genDecl generates code at a declaration node */
+/* Procedimento que gera código para nós do tipo Declaração.*/
 static void genDecl( TreeNode * tree){
 	TreeNode * p1, * p2;
 
@@ -453,46 +452,49 @@ static void genDecl( TreeNode * tree){
 
 		    inFunc = TRUE;
 
-		    /* generate code to store the location of func. entry */
+		    /* GEra código para armazenar a posição de entrada da função */
 		    loc = -(st_lookup(tree->name));
 		    loadFuncLoc = emitSkip(1);
 		    emitRM("ST", ac1, loc, gp, "func: store the location of func. entry");
-		    /* decrease global offset by 1 */
+		    /* Decrementa o deslocamento global, uma vez que esta posição é
+			referente à entrada da função */
 		    --globalOffset;
 
-		    /* generate code to unconditionally jump to next declaration */
+		    /* Gera código para executar um jump incondicional para a próxima
+			declaração */
 		    jmpLoc = emitSkip(1);
 		    emitComment(
 		        "func: unconditional jump to next declaration belongs here");
 
-		    /* skip code generation to allow jump to here
-		       when the function was called */
+		    /* Pula a geração de código para permitir um jump para esta posição
+			no ato da chamda da função */
 		    funcBodyLoc = emitSkip(0);
 		    emitComment("func: function body starts here");
 
-		    /* backpatch */
+		    /* Ponto de retorno */
 		    emitBackup(loadFuncLoc);
 		    emitRM("LDC", ac1, funcBodyLoc, 0, "func: load function location");
 		    emitRestore();
 
-		    /* generate code to store return address */
+		    /* Gera código para guardar o endereço de retorno */
 		    emitRM("ST", ac, retFO, mp, "func: store return address");
 
-		    /* calculate localOffset and nParams */
+		    /* calcula o deslocamento necessário para parametros e locais */
 		    localOffset = initFO;
 		    nParams = 0;
 		    cGen(p1);
 
-		    /* generate code for function body */
+		    /* Gera código para o corpo */
 		    if (strcmp(tree->name, "main") == 0)
 		      mainLoc = funcBodyLoc;
 
 		    cGen(p2);
 
-		    /* generate code to load pc with return address */
+		    /* Gera código para carregar o contador de programa (pc) com o
+			endereço de retorno */
 		    emitRM("LD", pc, retFO, mp, "func: load pc with return address");
 
-		    /* backpatch */
+		    /* Ponto de retorno */
 		    nextDeclLoc = emitSkip(0);
 		    emitBackup(jmpLoc);
 		    emitRM_Abs("LDA", pc, nextDeclLoc,
@@ -509,6 +511,7 @@ static void genDecl( TreeNode * tree){
     		break;
 
   		case VarK:
+			/* Altera os valores de deslocamento conforme ocorre declarações */
     		if (TraceCode) emitComment("-> var. decl.");
 
 		    if (tree->idtype == Array)
@@ -537,11 +540,10 @@ static void genDecl( TreeNode * tree){
   		default:
      		break;
   	}
-} /* genDecl */
+}
 
-/* Procedure cGen recursively generates code by
- * tree traversal
- */
+/* Procedimento recursivo interno de geração de código pela transversal da
+árvore de sintaxe */
 static void cGen( TreeNode * tree){
 	if (tree != NULL) {
 		switch (tree->nodekind) {
@@ -561,23 +563,17 @@ static void cGen( TreeNode * tree){
   	}
 }
 
+/* Chamada da função main. Ocorre logo após a inicialização do programa */
 void genMainCall() {
 	emitRM("LDC", ac, globalOffset, 0, "init: load globalOffset");
 	emitRO("ADD", mp, mp, ac, "init: initialize mp with globalOffset");
 
 	if (TraceCode) emitComment("-> Call");
 
-	/* generate code to store current mp */
 	emitRM("ST", mp, ofpFO, mp, "call: store current mp");
-	/* generate code to push new frame */
 	emitRM("LDA", mp, 0, mp, "call: push new frame");
-	/* generate code to save return in ac */
 	emitRM("LDA", ac, 1, pc, "call: save return in ac");
-
-	/* generate code for unconditional jump to function entry */
 	emitRM("LDC", pc, mainLoc, 0, "call: unconditional jump to main() entry");
-
-	/* generate code to pop current frame */
 	emitRM("LD", mp, ofpFO, mp, "call: pop current frame");
 
 	if (TraceCode) emitComment("<- Call");
@@ -603,11 +599,11 @@ void codeGen(TreeNode * syntaxTree, char * codefile) {
    	sc_push(globalScope);
    	/* Gera código para a máquina virtual */
    	cGen(syntaxTree);
-   	/* pop global scope */
+   	/* Desempilha escopo global */
    	sc_pop();
-   	/* call main() function */
+   	/* invoca função main() */
    	genMainCall();
-   	/* finish */
+   	/* Termina */
    	emitComment("End of execution.");
    	emitRO("HALT", 0, 0, 0, "");
 }

@@ -6,14 +6,22 @@
 
 #include "globals.h"
 
-/* set NO_PARSE to TRUE to get a scanner-only compiler */
-#define NO_PARSE FALSE
-/* set NO_ANALYZE to TRUE to get a parser-only compiler */
-#define NO_ANALYZE FALSE
+/*
+Esta flag define se ocorrerá a depuração do processo de análise sintática  pelo
+Bison. É impresso no stdout a sequencia de estados da árvore e ações tomadas
+ao longo do reconhecimento de regras.
 
-/* set NO_CODE to TRUE to get a compiler that does not
- * generate code
- */
+http://dinosaur.compilertools.net/bison/bison_11.html
+*/
+#define DEBUG_PARSE 0
+
+/* NO_PARSE = TRUE : Gera um compilador com apenas analise léxica */
+#define NO_PARSE FALSE
+/* NO_ANALYZE = TRUE : Gera um compilador com apenas analise léxica e
+sintática */
+#define NO_ANALYZE FALSE
+/* NO_CODE = TRUE : Gera um compilador com todas as análises mas não gera
+código */
 #define NO_CODE FALSE
 
 #include "util.h"
