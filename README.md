@@ -4,21 +4,18 @@ Trabalho de conclusão de curso apresentado ao Instituto de Ciência e Tecnologi
 Aluno: Amadeus Torezam Seilert
 
 Orientador: Prof. Dr. Luiz Eduardo Galvão Martins
-
-Universidade Federal de São Paulo – UNIFESP
-
-Instituto de Ciência de Tecnologia
-
-Bacharelado em Ciência da Computação
-
 ## Descrição
+
+Projeto proposto pelo autor do livro Compiler Construction: Principles and Practice, [Kenneth C. Louden](http://www.cs.sjsu.edu/~louden/). Consiste na implementação de um compilador para a [Linguagem C-](http://www.sierranevada.edu/snow/ExamplesX/C-Syntax.pdf), a qual possui uma gramática simples, suas definições são subconjunto da linguagem C. Ela permite a utilização de funções, recursividade, vetores, laços e controle.
 
 ### Scanner
 
 ### Parser
 
-### Code Emiter
+### Analiser
 
-### C-Machine
+### Code Generator
+
+### TINY Machine
 
 ## Utilização
