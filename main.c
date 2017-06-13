@@ -6,15 +6,6 @@
 
 #include "globals.h"
 
-/*
-Esta flag define se ocorrerá a depuração do processo de análise sintática  pelo
-Bison. É impresso no stdout a sequencia de estados da árvore e ações tomadas
-ao longo do reconhecimento de regras.
-
-http://dinosaur.compilertools.net/bison/bison_11.html
-*/
-#define DEBUG_PARSE 0
-
 /* NO_PARSE = TRUE : Gera um compilador com apenas analise léxica */
 #define NO_PARSE FALSE
 /* NO_ANALYZE = TRUE : Gera um compilador com apenas analise léxica e

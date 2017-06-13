@@ -97,12 +97,6 @@ typedef struct treeNode {
 /**************************************************/
 
 /*
-EchoSource = TRUE faz com que o arquivo de entrada seja impresso no arquivo
-listing com a numeração de linhas durante a análise sintática.
-*/
-//extern int EchoSource;
-
-/*
 TraceScan = TRUE faz com que os tokens identidicados durante o scan sejam
 impressos no arquivo listing.
 */
@@ -113,6 +107,15 @@ TraceParse = TRUE faz com que a árvore de sintaxe seja impressa no arquivo
 listing na forma linear (utilizando identação para os filhos)
 */
 extern int TraceParse;
+
+/*
+Esta flag define se ocorrerá a depuração do processo de análise sintática  pelo
+Bison. É impresso no stdout a sequencia de estados da árvore e ações tomadas
+ao longo do reconhecimento de regras.
+
+http://dinosaur.compilertools.net/bison/bison_11.html
+*/
+#define DEBUG_PARSE 0
 
 /*
 TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo

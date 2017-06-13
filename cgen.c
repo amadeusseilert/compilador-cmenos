@@ -452,7 +452,7 @@ static void genDecl( TreeNode * tree){
 
 		    inFunc = TRUE;
 
-		    /* GEra código para armazenar a posição de entrada da função */
+		    /* Gera código para armazenar a posição de entrada da função */
 		    loc = -(st_lookup(tree->name));
 		    loadFuncLoc = emitSkip(1);
 		    emitRM("ST", ac1, loc, gp, "func: store the location of func. entry");
