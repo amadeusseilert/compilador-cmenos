@@ -14,7 +14,7 @@
 /* Potência de dois para o deslocamento como multiplicador na função de hash */
 #define SHIFT 4
 /* Quantidade máxima de escopos que podem existir em um código */
-#define MAX_SCOPE 64
+#define MAX_SCOPE 1024
 
 /* Definição de um bucket para uma tabela de símbolos. É importante notar que um
 bucket possui referência encadeada também, para tratar colisões na função

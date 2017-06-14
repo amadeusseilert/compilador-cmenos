@@ -39,11 +39,14 @@ FILE * source;
 FILE * listing;
 FILE * code;
 
-int TraceScan = TRUE;
-int TraceParse = TRUE;
-int TraceAnalyze = TRUE;
-int TraceCode = TRUE;
 
+/* Defina aqui as flags de depuração descritas no globals.h */
+int TraceScan = FALSE;
+int TraceParse = FALSE;
+int TraceAnalyze = FALSE;
+int TraceCode = FALSE;
+
+/* Flag global que indica ocorrencia de erros */
 int Error = FALSE;
 
 /*

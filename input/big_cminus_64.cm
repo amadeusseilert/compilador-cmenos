@@ -1,0 +1,130 @@
+void func0 (void) { int k0; k0 = 1; output(k0); }
+void func1 (void) { int k1; k1 = 1; output(k1); }
+void func2 (void) { int k2; k2 = 1; output(k2); }
+void func3 (void) { int k3; k3 = 1; output(k3); }
+void func4 (void) { int k4; k4 = 1; output(k4); }
+void func5 (void) { int k5; k5 = 1; output(k5); }
+void func6 (void) { int k6; k6 = 1; output(k6); }
+void func7 (void) { int k7; k7 = 1; output(k7); }
+void func8 (void) { int k8; k8 = 1; output(k8); }
+void func9 (void) { int k9; k9 = 1; output(k9); }
+void func10 (void) { int k10; k10 = 1; output(k10); }
+void func11 (void) { int k11; k11 = 1; output(k11); }
+void func12 (void) { int k12; k12 = 1; output(k12); }
+void func13 (void) { int k13; k13 = 1; output(k13); }
+void func14 (void) { int k14; k14 = 1; output(k14); }
+void func15 (void) { int k15; k15 = 1; output(k15); }
+void func16 (void) { int k16; k16 = 1; output(k16); }
+void func17 (void) { int k17; k17 = 1; output(k17); }
+void func18 (void) { int k18; k18 = 1; output(k18); }
+void func19 (void) { int k19; k19 = 1; output(k19); }
+void func20 (void) { int k20; k20 = 1; output(k20); }
+void func21 (void) { int k21; k21 = 1; output(k21); }
+void func22 (void) { int k22; k22 = 1; output(k22); }
+void func23 (void) { int k23; k23 = 1; output(k23); }
+void func24 (void) { int k24; k24 = 1; output(k24); }
+void func25 (void) { int k25; k25 = 1; output(k25); }
+void func26 (void) { int k26; k26 = 1; output(k26); }
+void func27 (void) { int k27; k27 = 1; output(k27); }
+void func28 (void) { int k28; k28 = 1; output(k28); }
+void func29 (void) { int k29; k29 = 1; output(k29); }
+void func30 (void) { int k30; k30 = 1; output(k30); }
+void func31 (void) { int k31; k31 = 1; output(k31); }
+void func32 (void) { int k32; k32 = 1; output(k32); }
+void func33 (void) { int k33; k33 = 1; output(k33); }
+void func34 (void) { int k34; k34 = 1; output(k34); }
+void func35 (void) { int k35; k35 = 1; output(k35); }
+void func36 (void) { int k36; k36 = 1; output(k36); }
+void func37 (void) { int k37; k37 = 1; output(k37); }
+void func38 (void) { int k38; k38 = 1; output(k38); }
+void func39 (void) { int k39; k39 = 1; output(k39); }
+void func40 (void) { int k40; k40 = 1; output(k40); }
+void func41 (void) { int k41; k41 = 1; output(k41); }
+void func42 (void) { int k42; k42 = 1; output(k42); }
+void func43 (void) { int k43; k43 = 1; output(k43); }
+void func44 (void) { int k44; k44 = 1; output(k44); }
+void func45 (void) { int k45; k45 = 1; output(k45); }
+void func46 (void) { int k46; k46 = 1; output(k46); }
+void func47 (void) { int k47; k47 = 1; output(k47); }
+void func48 (void) { int k48; k48 = 1; output(k48); }
+void func49 (void) { int k49; k49 = 1; output(k49); }
+void func50 (void) { int k50; k50 = 1; output(k50); }
+void func51 (void) { int k51; k51 = 1; output(k51); }
+void func52 (void) { int k52; k52 = 1; output(k52); }
+void func53 (void) { int k53; k53 = 1; output(k53); }
+void func54 (void) { int k54; k54 = 1; output(k54); }
+void func55 (void) { int k55; k55 = 1; output(k55); }
+void func56 (void) { int k56; k56 = 1; output(k56); }
+void func57 (void) { int k57; k57 = 1; output(k57); }
+void func58 (void) { int k58; k58 = 1; output(k58); }
+void func59 (void) { int k59; k59 = 1; output(k59); }
+void func60 (void) { int k60; k60 = 1; output(k60); }
+void func61 (void) { int k61; k61 = 1; output(k61); }
+void func62 (void) { int k62; k62 = 1; output(k62); }
+void func63 (void) { int k63; k63 = 1; output(k63); }
+void main (void) {
+	func0();
+	func1();
+	func2();
+	func3();
+	func4();
+	func5();
+	func6();
+	func7();
+	func8();
+	func9();
+	func10();
+	func11();
+	func12();
+	func13();
+	func14();
+	func15();
+	func16();
+	func17();
+	func18();
+	func19();
+	func20();
+	func21();
+	func22();
+	func23();
+	func24();
+	func25();
+	func26();
+	func27();
+	func28();
+	func29();
+	func30();
+	func31();
+	func32();
+	func33();
+	func34();
+	func35();
+	func36();
+	func37();
+	func38();
+	func39();
+	func40();
+	func41();
+	func42();
+	func43();
+	func44();
+	func45();
+	func46();
+	func47();
+	func48();
+	func49();
+	func50();
+	func51();
+	func52();
+	func53();
+	func54();
+	func55();
+	func56();
+	func57();
+	func58();
+	func59();
+	func60();
+	func61();
+	func62();
+	func63();
+}
