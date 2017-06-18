@@ -9,6 +9,27 @@ Orientador: Prof. Dr. Luiz Eduardo Galvão Martins
 Projeto proposto pelo autor do livro Compiler Construction: Principles and Practice, [Kenneth C. Louden](http://www.cs.sjsu.edu/~louden/). Consiste na implementação de um compilador para a [Linguagem C-](http://www.sierranevada.edu/snow/ExamplesX/C-Syntax.pdf), a qual possui uma gramática simples, suas definições são subconjunto da linguagem C. Ela permite a utilização de funções, recursividade, vetores, laços e controle.
 
 ## Compilação
+
+O compilador possui *flags* de configuração que vão estabelecer quais módulos vão ser levados em consideração. Essas configurações se encontram arquivo *main.c* como diretivas de pré-processamento.
+
+```
+#define NO_PARSE FALSE
+#define NO_ANALYZE FALSE
+#define NO_CODE FALSE
+```
+
+Para gerar um compilador que realiza apenas a análise léxica, basta atribuir `TRUE` para `NO_PARSE`. `TRUE` para `NO_ANALYSE` gera um compilador que realiza análise léxica e sintática. `TRUE` para `NO_CODE`, gera um compilador que realiza todas as análises mas não gera código.
+
+Ainda é possível definir opções para depuração da execução. É recomendável atribuir `TRUE` para todas as opções listadas abaixo para obter informações relevantes das informações do processo de execução de cada etapada da compilação.
+
+```
+int TraceScan = FALSE;
+int TraceParse = FALSE;
+int DebugParse = FALSE;
+int TraceAnalyze = FALSE;
+int TraceCode = FALSE;
+```
+
 ### Sistema Linux
 Em qualquer distribuição, a compilação é mais simples, pois as ferramentas GCC, Bison, Flex e Makefile já estão pré instaladas. Portanto basta executar os seguintes comandos dentro da pasta do projeto:
 
@@ -25,7 +46,7 @@ gcc machine/tm.c -o machine/tm
 Alguns avisos de compilação são emitidos por conta da flag "-Wall" no arquivo *Makefile*. Eles podem ser ignorados.
 
 ### Sistema Windows
-Para gerar os executáveis do projeto, é preciso obter o GCC, o Flex e o Bison. A forma mais rápida de se obter um ambiente compatível no sistema Windows é instalando o [MSYS2]( \url{)http://www.msys2.org/). Este *software* oferece uma plataforma com *toolchains* MinGW e Cygwin. O mesmo oferece o instalador de pacotes Pacman, o qual será o responsável por baixar e instalar as dependências deste projeto. Após o guia de instalação do site do MSYS2, invoque os seguintes comandos:
+Para gerar os executáveis do projeto, é preciso obter o GCC, o Flex e o Bison. A forma mais rápida de se obter um ambiente compatível no sistema Windows é instalando o [MSYS2](http://www.msys2.org/). Este *software* oferece uma plataforma com *toolchains* MinGW e Cygwin. O mesmo oferece o instalador de pacotes Pacman, o qual será o responsável por baixar e instalar as dependências deste projeto. Após o guia de instalação do site do MSYS2, invoque os seguintes comandos:
 
 Instalação do GCC pelo Pacman:
 ```
