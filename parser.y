@@ -530,7 +530,7 @@ static int yylex(void) {
 Esta função inicia a análise e constroi a árvore de sintaxe.
  */
 YYSTYPE parse(void) {
-	yydebug = DEBUG_PARSE; //define se o bison fará depuração da análise
+	yydebug = DebugParse; //define se o bison fará depuração da análise
 	yyparse();
 	return savedTree;
 }

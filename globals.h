@@ -115,7 +115,7 @@ ao longo do reconhecimento de regras.
 
 http://dinosaur.compilertools.net/bison/bison_11.html
 */
-#define DEBUG_PARSE 0
+extern int DebugParse;
 
 /*
 TraceAnalyze = TRUE faz com que a tabela de símbolos seja impressa no arquivo

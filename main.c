@@ -43,6 +43,7 @@ FILE * code;
 /* Defina aqui as flags de depuração descritas no globals.h */
 int TraceScan = FALSE;
 int TraceParse = FALSE;
+int DebugParse = FALSE;
 int TraceAnalyze = FALSE;
 int TraceCode = FALSE;
 
