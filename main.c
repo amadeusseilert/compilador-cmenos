@@ -41,11 +41,11 @@ FILE * code;
 
 
 /* Defina aqui as flags de depuração descritas no globals.h */
-int TraceScan = FALSE;
-int TraceParse = FALSE;
+int TraceScan = TRUE;
+int TraceParse = TRUE;
 int DebugParse = FALSE;
-int TraceAnalyze = FALSE;
-int TraceCode = FALSE;
+int TraceAnalyze = TRUE;
+int TraceCode = TRUE;
 
 /* Flag global que indica ocorrencia de erros */
 int Error = FALSE;
@@ -75,14 +75,17 @@ int main(int argc, char * argv[]) {
 
 	listing = stdout; /* Envia o arquivo de depuração para o stdout */
 	fprintf(listing, "\n" ANSI_COLOR_YELLOW "C MINUS COMPILATION" ANSI_COLOR_RESET ": %s\n", inputName);
-	fprintf(listing, "\n"ANSI_COLOR_YELLOW "Identified Tokens: "ANSI_COLOR_RESET "\n");
+	if (TraceScan)
+		/* Caso a flag de TraceScan for TRUE, os tokens lidos são impressos no
+		listing */
+		fprintf(listing, "\n"ANSI_COLOR_YELLOW "Identified Tokens: "ANSI_COLOR_RESET "\n");
 #if NO_PARSE
 	while (getToken() != EOF);
 #else
 	syntaxTree = parse();
 
 	if (TraceParse) {
-		/* Caso a flag de TraceScan for TRUE, a árvore de sintaxe é impressa no
+		/* Caso a flag de TraceParse for TRUE, a árvore de sintaxe é impressa no
 		listing */
 
       	fprintf(listing, "\n"ANSI_COLOR_YELLOW "Syntax tree:"ANSI_COLOR_RESET"\n");
