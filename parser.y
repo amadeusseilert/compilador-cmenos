@@ -53,6 +53,10 @@ http://dinosaur.compilertools.net/bison/bison_6.html#SEC57
 %token ERROR OC CC
 
 %nonassoc LT LTE GT GTE EQ DIF
+
+//resolução de conflitos shift reduce da regra if-else
+%nonassoc "then"
+%nonassoc ELSE
 %left PLUS MINUS
 %left TIMES OVER
 
@@ -275,21 +279,26 @@ expression_decl : expression SEMI { $$ = $1; }
 			| SEMI { $$ = NULL; }
 			;
 
-selection_decl : IF LPAREN expression RPAREN statement else_decl
+selection_decl : IF LPAREN expression RPAREN statement  %prec "then"
 			{
-				/* A gramática define que o 'else' é opcional */
+				/* A parte %prec "then" indica para o Bison a nomenclatura da
+				precdência da regra. */
                 $$ = newNode();
 				$$->nodekind = StmtK;
 				$$->kind.stmt = IfK;
                 $$->child[0] = $3;
             	$$->child[1] = $5;
-                $$->child[2] = $6;
             }
+			| IF LPAREN expression RPAREN statement ELSE statement
+			{
+				$$ = newNode();
+				$$->nodekind = StmtK;
+				$$->kind.stmt = IfK;
+                $$->child[0] = $3;
+            	$$->child[1] = $5;
+                $$->child[2] = $7;
+			}
             ;
-
-else_decl : ELSE statement { $$ = $2; }
-         	| { $$ = NULL; }
-        	;
 
 iteration_decl : WHILE LPAREN expression RPAREN statement
 			{
@@ -510,7 +519,7 @@ arg_list :	arg_list COMA expression
 /*
 Função responsável em emitir as mensagens de erro de sintaxe no listing.
 */
-int yyerror(char * message) {
+int yyerror(char const * message) {
 	printf(ANSI_COLOR_RED "Syntax Error" ANSI_COLOR_RESET " at line %d: %s\n", lineno, message);
 	printf("Current token: ");
 	printToken(yychar, tokenString);

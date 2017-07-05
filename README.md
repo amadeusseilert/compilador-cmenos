@@ -46,7 +46,7 @@ gcc machine/tm.c -o machine/tm
 Alguns avisos de compilação são emitidos por conta da flag "-Wall" no arquivo *Makefile*. Eles podem ser ignorados.
 
 ### Sistema Windows
-Para gerar os executáveis do projeto, é preciso obter o GCC, o Flex e o Bison. A forma mais rápida de se obter um ambiente compatível no sistema Windows é instalando o [MSYS2](http://www.msys2.org/). Este *software* oferece uma plataforma com *toolchains* MinGW e Cygwin. O mesmo oferece o instalador de pacotes Pacman, o qual será o responsável por baixar e instalar as dependências deste projeto. Após o guia de instalação do site do MSYS2, invoque os seguintes comandos:
+Para gerar os executáveis do projeto, é preciso obter o GCC, o Flex e o Bison. A forma mais rápida de se obter um ambiente compatível no sistema Windows é instalando o [MSYS2](http://www.msys2.org/). Este *software* oferece uma plataforma com *toolchains* MinGW e Cygwin. O mesmo oferece o instalador de pacotes Pacman, o qual será o responsável por baixar e instalar as dependências deste projeto. Após o guia de instalação do site do MSYS2, invoque os seguintes comandos no terminal do MSYS2:
 
 Instalação do GCC pelo Pacman:
 ```
@@ -80,7 +80,7 @@ Compilação da máquina TINY:
 gcc machine/tm.c -o machine/tm
 ```
 
-Alguns avisos de compilação são emitidos por conta da flag "-Wall" no arquivo *Makefile*. Eles podem ser ignorados.
+O arquivo *Makefile* executa o Bison com a flag "-d" gerando um arquivo *parser.output*. Neste arquivo é possível visualizar todas as transições de estados do *parser* do compilador.
 
 ## Utilização
 

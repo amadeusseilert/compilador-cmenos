@@ -12,7 +12,7 @@
 /*
 Função responsável em emitir as mensagens de erro de sintaxe no listing.
 */
-int yyerror(char * message);
+int yyerror(char const * message);
 
 /*
 Esta função invoca a função getToken para criar um output do Yacc/Bison

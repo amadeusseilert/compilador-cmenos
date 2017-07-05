@@ -18,7 +18,7 @@ CC = gcc
 
 CLEAN-CMD = rm -f
 
-CFLAGS = -Wall -g
+CFLAGS = -g
 
 OBJS = main.o util.o analyze.o symtab.o lex.yy.o parser.tab.o code.o cgen.o
 
